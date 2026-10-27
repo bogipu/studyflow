@@ -47,3 +47,33 @@
 .calendar-page .day.selected{outline-color:#ab96a4}
 .calendar-page .event-chip{color:#473e47}
 .calendar-page .chip-bblooms{background:#ffe1d3}
+
+/* Feladatok – a naptárral összehangolt, visszafogott pasztell megjelenés.
+   Csak vizuális szabályok: a feladatok tartalma és működése változatlan. */
+.tasks-page{background:#fcfbfa;color:#5d5960}
+.tasks-page .hero{background:#f8f6f5;border:1px solid #f0eae8;box-shadow:none}
+.tasks-page .hero h1{color:#746371}
+.tasks-page .hero p{color:#807981}
+.tasks-page .hero .eyebrow{color:#988994}
+.tasks-page .back{background:#f2efef;color:#746772;border:1px solid #ebe6e7}
+.tasks-page .panel{background:#fff;border-color:#ece9e7;box-shadow:0 5px 18px #514c5008}
+.tasks-page h2{color:#716572}
+.tasks-page .muted,.tasks-page .empty{color:#88818a}
+.tasks-page .tabs{gap:8px}
+.tasks-page .tabs button{background:#f6f4f4;border:1px solid #eae6e8;color:#766d76;transition:background .15s,border-color .15s}
+.tasks-page .tabs button.active{background:#e9e0e8;border-color:#d9cad6;color:#665363}
+.tasks-page .tabs button:hover{background:#f1ebef}
+.tasks-page .task{border-color:#f0edee;gap:12px}
+.tasks-page .task .info strong{color:#635d65}
+.tasks-page .task small{color:#918a92}
+.tasks-page input[type=checkbox]{accent-color:#9cbaa5}
+.tasks-page button{background:#e9e0e8;color:#675764}
+.tasks-page .actions button{background:#f2eff1;color:#726774}
+.tasks-page .actions button.danger{background:#f9eff0;color:#a26973}
+.tasks-page input:not([type=checkbox]),.tasks-page select{background:#fff;border-color:#e5dfe3;color:#625d65}
+.tasks-page input:focus-visible,.tasks-page select:focus-visible{outline:2px solid #b7a5b2;outline-offset:1px}
+.tasks-page .form label{color:#79717a}
+.tasks-page .form button[type=submit]{background:#e9e0e8;color:#665363;border:1px solid #d9cad6}
+.tasks-page .notice,.tasks-page .status{background:#fffbf0;color:#82745b;border:1px solid #f2ead6}
+.tasks-page button:focus-visible,.tasks-page .back:focus-visible{outline:3px solid #9c8998;outline-offset:2px}
+@media(max-width:500px){.tasks-page .tabs{gap:5px}.tasks-page .tabs button{padding:9px 11px}}
