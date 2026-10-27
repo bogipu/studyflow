@@ -3,28 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10182b">
+  <meta name="theme-color" content="#f8f7f2">
   <title>StudyFlow – Tanulókártyák</title>
   <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#eef2ff;background:#10182b;font-synthesis:none}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh}main{max-width:720px;margin:auto;padding:24px 18px 50px}
-    h1{margin:0;font-size:2rem;letter-spacing:-.04em}.sub{color:#aab6d0;margin:7px 0 24px}
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#34443f;background:#f8f7f2;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 10% 5%,#e9f2ec 0,transparent 45%),radial-gradient(circle at 90% 85%,#f7e9e5 0,transparent 42%),#f8f7f2}
+    main{max-width:720px;margin:auto;padding:32px 18px 50px}h1{margin:0;font-size:2rem;letter-spacing:-.04em;color:#3f655c}.sub{color:#7b8b85;margin:7px 0 24px}
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-    select,button{font:inherit;border-radius:12px;padding:12px 14px}select{background:#202e4b;color:#fff;border:1px solid #52617c;flex:1;min-width:180px}
-    button{border:0;background:#365edb;color:white;cursor:pointer;font-weight:650}button:hover{filter:brightness(1.12)}button:disabled{opacity:.45;cursor:not-allowed}
-    .secondary{background:#263650}.stats{color:#bdc9e1;margin:10px 0 18px;min-height:24px}
-    .flashcard{width:100%;min-height:300px;background:linear-gradient(145deg,#233d72,#1b2b4e);border:1px solid #526b9d;border-radius:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px;padding:30px;text-align:center;touch-action:pan-y;user-select:none;box-shadow:0 15px 35px #0003;cursor:pointer}
-    .flashcard:focus-visible{outline:3px solid #93b4ff;outline-offset:4px}.flashcard .hint{font-size:.85rem;color:#b7c8e8}.flashcard .word{font-size:clamp(1.7rem,5vw,2.7rem);font-weight:750;overflow-wrap:anywhere}
-    .actions{display:flex;gap:12px;margin-top:18px}.actions button{flex:1;min-height:54px}.retry{background:#8d4b22}.learn{background:#17805e}
-    .message{padding:28px 20px;border-radius:18px;background:#202e4b;line-height:1.6}.message.error{border:1px solid #dd7883}
-    .footer{margin-top:24px;color:#91a1bd;font-size:.85rem;line-height:1.5}
-    .hidden{display:none!important}@media(max-width:460px){main{padding:20px 14px}.flashcard{min-height:270px}.actions{gap:8px}.actions button{padding:12px 8px;font-size:.92rem}}
+    select,button{font:inherit;border-radius:14px;padding:12px 14px}select{background:#fffefa;color:#3c514b;border:1px solid #d7e2da;flex:1;min-width:180px}
+    button{border:0;background:#91b9aa;color:#263f38;cursor:pointer;font-weight:650;transition:filter .2s,transform .2s}button:hover{filter:brightness(.97)}button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowed}
+    .secondary{background:#e5ede8;color:#526d63}.stats{color:#74887f;margin:10px 0 18px;min-height:24px}
+    .card-scene{width:100%;height:310px;perspective:1200px;touch-action:pan-y;user-select:none;cursor:pointer;outline:none}
+    .card-scene:focus-visible{outline:3px solid #88b8a6;outline-offset:5px;border-radius:26px}
+    .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+    .card-scene.is-flipped .card-inner{transform:rotateY(180deg)}
+    .card-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;border:1px solid #d7e3d9;border-radius:26px;box-shadow:0 16px 38px #4f71651c;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .card-front{background:linear-gradient(145deg,#f0f5ed,#e1ede5)}.card-back{background:linear-gradient(145deg,#f7e9e8,#f0dfdf);border-color:#ebd8d5;transform:rotateY(180deg)}
+    .word{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;overflow-wrap:anywhere;color:#39584f}
+    .card-back .word{color:#705953}
+    .actions{display:flex;gap:12px;margin-top:18px}.actions button{flex:1;min-height:54px}.retry{background:#f1d9ca;color:#745344}.learn{background:#c7e3d3;color:#345a49}
+    .message{padding:28px 20px;border-radius:18px;background:#edf2ec;line-height:1.6}.message.error{border:1px solid #d7a6a6}
+    .footer{margin-top:24px;color:#8a9a92;font-size:.85rem;line-height:1.5}.hidden{display:none!important}
+    @media(max-width:460px){main{padding:20px 14px}.card-scene{height:270px}.actions{gap:8px}.actions button{padding:12px 8px;font-size:.92rem}}
+    @media(prefers-reduced-motion:reduce){.card-inner{transition:none}}
   </style>
 </head>
 <body>
 <main>
   <h1>StudyFlow</h1>
-  <p class="sub">Angol–magyar tanulókártyák · Excelből</p>
+  <p class="sub">Magyar–angol tanulókártyák · Excelből</p>
   <div class="toolbar">
     <select id="category" aria-label="Munkalap választása" disabled><option>Betöltés…</option></select>
     <select id="order" aria-label="Tanulási sorrend"><option value="random">🔀 Véletlenszerű</option><option value="sequential">☰ Excel-sorrend</option></select>
@@ -34,10 +41,11 @@
   <div id="stats" class="stats" aria-live="polite"></div>
   <div id="message" class="message">Excel-adatok betöltése…</div>
   <div id="study" class="hidden">
-    <div id="card" class="flashcard" role="button" tabindex="0" aria-label="Kártya megfordítása">
-      <span id="side" class="hint">ANGOL · Kattints a fordításhoz</span>
-      <span id="word" class="word"></span>
-      <span class="hint">Kattints vagy koppints a kártyára</span>
+    <div id="card" class="card-scene" role="button" tabindex="0" aria-label="Kártya megfordítása" aria-pressed="false">
+      <div class="card-inner">
+        <div class="card-face card-front"><span id="frontWord" class="word"></span></div>
+        <div class="card-face card-back"><span id="backWord" class="word"></span></div>
+      </div>
     </div>
     <div class="actions">
       <button id="again" class="retry" type="button">← Újra kérem</button>
@@ -59,6 +67,7 @@ let current = null;
 let flipped = false;
 let retryQueue = [];
 let touchStart = null;
+let suppressClick = false;
 let pending = [];
 let roundRetry = [];
 let orderMode = localStorage.getItem('studyflow-order') === 'sequential' ? 'sequential' : 'random';
@@ -125,8 +134,10 @@ function showCard() {
 }
 function renderCard() {
   if (!current) return;
-  $('side').textContent = flipped ? 'MAGYAR · Kattints az angolhoz' : 'ANGOL · Kattints a fordításhoz';
-  $('word').textContent = flipped ? current.answer : current.question;
+  $('frontWord').textContent = current.answer;
+  $('backWord').textContent = current.question;
+  $('card').classList.toggle('is-flipped', flipped);
+  $('card').setAttribute('aria-pressed', String(flipped));
 }
 function flip() { if (current) { flipped = !flipped; renderCard(); } }
 function next(kind) {
@@ -208,7 +219,7 @@ $('reset').addEventListener('click', () => {
     current = null; retryQueue = []; buildQueue(); showCard();
   }
 });
-$('card').addEventListener('click', flip);
+$('card').addEventListener('click', () => { if (suppressClick) { suppressClick = false; return; } flip(); });
 $('card').addEventListener('keydown', e => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
   else if (e.key === 'ArrowLeft') { e.preventDefault(); next('again'); }
@@ -226,6 +237,7 @@ $('card').addEventListener('touchend', e => {
   touchStart = null;
   if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.3) {
     e.preventDefault();
+    suppressClick = true;
     next(dx > 0 ? 'learn' : 'again');
   }
 }, {passive:false});
