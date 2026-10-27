@@ -161,6 +161,11 @@ function buildQueue() {
 function advanceCard() {
   current = pending.shift() || null;
 }
+function progressLabel() {
+  if (!active || !active.cards.length) return '0% megtanulva';
+  const learned = active.cards.filter(card => learnedOnline.has(card.id)).length;
+  return `${Math.round(learned / active.cards.length * 100)}% megtanulva (${learned}/${active.cards.length})`;
+}
 function showRoundSummary() {
   current = null;
   $('study').classList.add('hidden');
@@ -169,7 +174,7 @@ function showRoundSummary() {
   $('missedCount').textContent = String(roundMissed.size);
   $('retryMissed').disabled = roundMissed.size === 0;
   $('roundSummary').classList.remove('hidden');
-  $('stats').textContent = `${active.name} · ${roundCards.length} kártyát átnéztél`;
+  $('stats').textContent = `${active.name} · ${roundCards.length} kártyát átnéztél · ${progressLabel()}`;
 }
 
 function hashText(text) {
@@ -197,13 +202,13 @@ function showCard() {
   if (!current) {
     if (roundCards.length) showRoundSummary();
     else {
-      $('stats').textContent = `${active.name} · ${active.cards.length} összesen`;
+      $('stats').textContent = `${active.name} · ${progressLabel()}`;
       showMessage('Már minden kártyát megtanultál. Az Újrakezdés gombbal ismételheted az egészet.');
     }
     return;
   }
   const reviewed = roundKnown.size + roundMissed.size;
-  $('stats').textContent = `${active.name} · ${reviewed} / ${roundCards.length} átnézve`;
+  $('stats').textContent = `${active.name} · ${reviewed} / ${roundCards.length} átnézve · ${progressLabel()}`;
   flipped = false;
   renderCard();
   $('roundSummary').classList.add('hidden');
