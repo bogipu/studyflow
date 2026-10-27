@@ -36,6 +36,15 @@
     .learn{background:#DDEAF1;color:#5D536B}
     .message{padding:28px 20px;border-radius:18px;background:#F4EBF1;line-height:1.6}
     .message.error{border:1px solid #C49AAA}
+    .round-summary{padding:28px 22px;border-radius:22px;background:#F4EBF1;text-align:center}
+    .round-summary h2{margin:0 0 14px;font-size:1.45rem;color:#5D536B}
+    .round-counts{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:18px 0 22px}
+    .round-count{padding:16px 22px;border-radius:16px;background:#FFFDFE;min-width:120px}
+    .round-count strong{display:block;font-size:2rem}
+    .round-options{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+    .round-options button{flex:1;min-width:190px;min-height:54px}
+    .round-options .missed{background:#F2E4E7;color:#5D536B}
+    .round-options .all{background:#DDEAF1;color:#5D536B}
     .hidden{display:none!important}
     @media(max-width:460px){main{padding:20px 14px}.card-scene{height:270px}.actions{gap:8px}.actions button{padding:12px 8px;font-size:.92rem}}
     @media(prefers-reduced-motion:reduce){.card-inner{transition:none}}
@@ -52,6 +61,17 @@
   </div>
   <div id="stats" class="stats" aria-live="polite"></div>
   <div id="message" class="message">Excel-adatok betöltése…</div>
+  <div id="roundSummary" class="round-summary hidden" aria-live="polite">
+    <h2>Végigértél a listán! 🎉</h2>
+    <div class="round-counts">
+      <div class="round-count">Tudtam<strong id="knownCount">0</strong></div>
+      <div class="round-count">Nem tudtam<strong id="missedCount">0</strong></div>
+    </div>
+    <div class="round-options">
+      <button id="retryMissed" class="missed" type="button">Csak a nem tudottakat tanulom tovább</button>
+      <button id="restartAll" class="all" type="button">Elölről kezdem az egészet</button>
+    </div>
+  </div>
   <div id="study" class="hidden">
     <div id="card" class="card-scene" role="button" tabindex="0" aria-label="Kártya megfordítása" aria-pressed="false">
       <div class="card-inner">
@@ -81,6 +101,9 @@ let touchStart = null;
 let suppressClick = false;
 let pending = [];
 let roundRetry = [];
+let roundCards = [];
+let roundKnown = new Set();
+let roundMissed = new Set();
 // Minden Excel-munkalap saját, harmonikus pasztell kártyaszíneket kap.
 // A két szín egy munkalapon belül a kártya elejéhez és hátuljához tartozik.
 const SHEET_COLORS = [
@@ -113,21 +136,32 @@ function shuffle(items) {
   }
   return a;
 }
+function beginRound(cards) {
+  roundCards = [...cards];
+  roundKnown = new Set();
+  roundMissed = new Set();
+  pending = orderMode === 'random' ? shuffle(cards) : [...cards];
+  current = null;
+  $('roundSummary').classList.add('hidden');
+  showCard();
+}
 function buildQueue() {
   if (!active) return;
   const learned = learnedSet(active);
-  const cards = active.cards.filter(c => !learned.has(c.id));
-  pending = orderMode === 'random' ? shuffle(cards) : cards;
-  roundRetry = [];
+  beginRound(active.cards.filter(c => !learned.has(c.id)));
 }
 function advanceCard() {
-  if (!active) return;
-  if (!pending.length && roundRetry.length) {
-    const retries = active.cards.filter(c => roundRetry.includes(c.id) && !learnedSet(active).has(c.id));
-    pending = orderMode === 'random' ? shuffle(retries) : retries;
-    roundRetry = [];
-  }
   current = pending.shift() || null;
+}
+function showRoundSummary() {
+  current = null;
+  $('study').classList.add('hidden');
+  $('message').classList.add('hidden');
+  $('knownCount').textContent = String(roundKnown.size);
+  $('missedCount').textContent = String(roundMissed.size);
+  $('retryMissed').disabled = roundMissed.size === 0;
+  $('roundSummary').classList.remove('hidden');
+  $('stats').textContent = `${active.name} · ${roundCards.length} kártyát átnéztél`;
 }
 
 function hashText(text) {
@@ -146,24 +180,27 @@ function saveLearned(sheet, set) {
   catch { showMessage('A böngésző nem engedte menteni a haladást. Ellenőrizd a tárhelybeállításokat.', true); return false; }
 }
 function showMessage(text, error = false) {
-  $('study').classList.add('hidden'); $('message').classList.remove('hidden');
+  $('study').classList.add('hidden'); $('roundSummary').classList.add('hidden'); $('message').classList.remove('hidden');
   $('message').classList.toggle('error', error); $('message').textContent = text;
 }
 function showCard() {
   if (!active) return;
-  const learned = learnedSet(active);
-  const remaining = active.cards.filter(c => !learned.has(c.id));
-  $('stats').textContent = `${active.name} · ${learned.size} megtanult · ${remaining.length} hátralévő / ${active.cards.length} összesen`;
-  if (!remaining.length) {
-    current = null;
-    showMessage('🎉 Ezt a munkalapot megtanultad! Válassz másik kategóriát, vagy kattints az Újrakezdés gombra.');
+  if (!current) advanceCard();
+  if (!current) {
+    if (roundCards.length) showRoundSummary();
+    else {
+      $('stats').textContent = `${active.name} · ${active.cards.length} összesen`;
+      showMessage('Már minden kártyát megtanultál. Az Újrakezdés gombbal ismételheted az egészet.');
+    }
     return;
   }
-  if (!current) advanceCard();
-  if (!current) { showMessage('Nincs több kártya.'); return; }
+  const reviewed = roundKnown.size + roundMissed.size;
+  $('stats').textContent = `${active.name} · ${reviewed} / ${roundCards.length} átnézve`;
   flipped = false;
   renderCard();
-  $('message').classList.add('hidden'); $('study').classList.remove('hidden');
+  $('roundSummary').classList.add('hidden');
+  $('message').classList.add('hidden');
+  $('study').classList.remove('hidden');
   requestAnimationFrame(fitCardWords);
 }
 function renderCard() {
@@ -204,15 +241,30 @@ function next(kind) {
   if (kind === 'learn') {
     const set = learnedSet(active); set.add(current.id);
     if (!saveLearned(active, set)) return;
-  } else if (!roundRetry.includes(current.id)) {
-    roundRetry.push(current.id);
+    roundKnown.add(current.id);
+  } else {
+    roundMissed.add(current.id);
   }
   current = null;
   showCard();
 }
+function restartAll() {
+  if (!active) return;
+  try { localStorage.removeItem(keyFor(active)); }
+  catch { showMessage('Nem sikerült törölni a mentett haladást.', true); return; }
+  beginRound(active.cards);
+}
+$('retryMissed').addEventListener('click', () => {
+  if (!active) return;
+  const missed = active.cards.filter(c => roundMissed.has(c.id));
+  if (missed.length) beginRound(missed);
+});
+$('restartAll').addEventListener('click', restartAll);
 function selectSheet(index) {
   setSheetColors(index);
-  active = sheets[index] || null; current = null; retryQueue = []; buildQueue();
+  active = sheets[index] || null; current = null; retryQueue = [];
+  roundCards = []; roundKnown = new Set(); roundMissed = new Set();
+  $('roundSummary').classList.add('hidden');
   $('reset').disabled = !active;
   if (!active) { showMessage('Nem található munkalap.', true); return; }
   if (!active.cards.length) {
@@ -220,7 +272,7 @@ function selectSheet(index) {
     showMessage('Ez a munkalap még nem tartalmaz tanulható szópárokat. Az első sor legyen fejléc, az A és B oszlopban pedig legyenek szavak.');
     return;
   }
-  showCard();
+  buildQueue();
 }
 async function loadExcel() {
   $('reload').disabled = true;
@@ -270,9 +322,7 @@ async function loadExcel() {
 $('order').addEventListener('change', e => {
   orderMode = e.target.checked ? 'random' : 'sequential';
   try { localStorage.setItem('studyflow-order', orderMode); } catch {}
-  current = null;
   buildQueue();
-  showCard();
 });
 $('category').addEventListener('change', e => selectSheet(Number(e.target.value)));
 $('reload').addEventListener('click', loadExcel);
@@ -281,7 +331,7 @@ $('reset').addEventListener('click', () => {
   if (confirm(`Biztosan törlöd a(z) „${active.name}” munkalap megtanult jelöléseit ezen az eszközön?`)) {
     try { localStorage.removeItem(keyFor(active)); }
     catch { showMessage('Nem sikerült törölni a mentett haladást.', true); return; }
-    current = null; retryQueue = []; buildQueue(); showCard();
+    current = null; retryQueue = []; buildQueue();
   }
 });
 $('card').addEventListener('click', () => { if (suppressClick) { suppressClick = false; return; } flip(); });
