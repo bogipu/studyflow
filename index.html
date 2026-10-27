@@ -94,7 +94,7 @@
     </div>
   </div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script>
 'use strict';
 // Az Excel fájl neve a GitHub-tárhely gyökérkönyvtárában.
@@ -347,23 +347,19 @@ function selectSheet(index) {
   }
   buildQueue();
 }
+// Beépített kártyaadatok: külső Excel-olvasó nélkül is működik.
+// Ha módosítod a studyflow.xlsx fájlt, a beépített adatokat is frissíteni kell.
+const EMBEDDED_WORKBOOK = {"10.26.":[["megvádolva lenni vmivel","to be accused of"],["felület","surface - "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["kell, kellene","ought to - "],["kifutó","enclosure "],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"words":[["spejz","pantry"],["összegyűlik, összeadódik","to pile up"],["vízesés","waterfall"],["bizonyíték","evidence"],["tárgyalás","trial"],["feltételezni","to assume"],["bűnös","guilty"],["meggyőző","convincing"],["védelmi, védő, védelem","defence"],["ijedt, fél","frightened"],["megvádolva lenni vmivel","to be accused of"],["igazság","justice "],["a fiatalok - mindenkire vonatkoztatva, gyűjtőnév","the young"],["többé nem","no longer"],["elhitelteleníteni, lejáratni","to discredit"],["gondolkodni valamin","to think about"],["kitalálni, kigondolni, eszébe jut","to think of"],["kétnyelvű","bilingual "],["simogatni","to pet "],["simogatni ","to caress "],["simogatni","to stroke "],["gyanú","suspicion "],["felnevelés, neveltetés","upbringing "],["tudatosság","awareness "],["tudatában lenni vminek","to be aware of "],["emelkedni, növelni","to increase "],["tégla","brick "],["félrevezetni","to mislead "],["kivágni, eltávolítani","to edit out "],["véghezvinni","to carry out "],["ugyanúgy, mint","as well as "],["venni, vásárolni vmit","to purchase "],["terepgyakorlat","field practice/fieldwork "],["elővigyázatos","cautious "],["felület","surface - "],["csapdába ejteni","to trap - "],["nagyság, hatalmasság","vastness -  "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],[" szükséges, alapvető","essential -"],["gond, probléma","matter - "],["elméleti szinten, elméletileg","theoretically - "],["két hét","fortnight - "],["szánalmas látvány","pathetic sight - "],["szorítani","to clamp - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["hétköznapiság","mundanity - "],["furcsaság, különös szokás","quirk - "],["ellenállni","to resist - "],["kikapcsolni","to switch off - "],["bekapcsolni","to switch on - "],["kell, kellene","ought to - "],["harisnya","tights - "],[" nem gondolni rá, eltávolodni tőle","to take your mind off of (something) -"],["pata","hoof"],["paták","hooves "],[" veszélyforrás, rossz viselkedésű valaki,  veszedelem","menace -"],["kifutó","enclosure "],["most az egyszer","for once "],["",""],["",""],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"zöld fogalmak":[["ZÖLDINFRASTRUKTÚRA","„Zöldinfrastruktúrának nevezzük azokat a természetes és félig természetes területeket, valamint egyéb növényzettel fedett és ökológiai funkciót betöltő területek stratégiailag megtervezett hálózatát, amelyet úgy terveztek és irányítanak, hogy széleskörű ökoszisztéma-szolgáltatások nyújtására legyenek képesek”."]]};
 async function loadExcel() {
   $('reload').disabled = true;
   $('category').disabled = true;
-  showMessage('Excel-adatok betöltése…');
+  showMessage('Tanulókártyák betöltése…');
   $('stats').textContent = '';
   try {
-    if (typeof XLSX === 'undefined') throw new Error('Az Excel-olvasó könyvtár nem töltődött be. Ellenőrizd az internetkapcsolatot.');
-    const url = EXCEL_FILE + '?v=' + Date.now();
-    const response = await fetch(url, {cache:'no-store'});
-    if (!response.ok) throw new Error(`Nem sikerült megnyitni a(z) ${EXCEL_FILE} fájlt (HTTP ${response.status}). Ellenőrizd, hogy az index.html mellett van-e, pontosan ezzel a névvel.`);
-    const bytes = await response.arrayBuffer();
-    const workbook = XLSX.read(bytes, {type:'array'});
-    const parsed = workbook.SheetNames.map(name => {
-      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], {header:1, defval:'', blankrows:false});
+    const parsed = Object.entries(EMBEDDED_WORKBOOK).map(([name, rows]) => {
       const seen = new Map();
       const cards = [];
-      for (const row of rows.slice(1)) {
+      for (const row of rows) {
         const question = String(row[0] ?? '').trim();
         const answer = String(row[1] ?? '').trim();
         if (!question || !answer) continue;
@@ -373,8 +369,8 @@ async function loadExcel() {
         cards.push({id:base + ':' + count, question, answer});
       }
       return {name, cards};
-    }); // Minden Excel-munkalap látszik a választóban, az üresek is.
-    if (!parsed.length) throw new Error('Az Excel-fájlban nem található munkalap.');
+    });
+    if (!parsed.length) throw new Error('Nincsenek munkalapok.');
     const previousName = active?.name;
     sheets = parsed;
     $('category').replaceChildren();
