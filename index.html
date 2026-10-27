@@ -12,6 +12,9 @@
     body{margin:0;min-height:100vh;background:#FAF5F7;color:#5D536B}
     main{max-width:720px;margin:auto;padding:32px 18px 50px}
     h1{margin:0 0 24px;font-size:2rem;letter-spacing:-.04em;color:#5D536B}
+    .topnav{display:flex;justify-content:flex-end;margin:-12px 0 16px}
+    .topnav a{display:inline-flex;align-items:center;gap:6px;padding:10px 15px;border-radius:14px;background:#EAE3F2;color:#5D536B;text-decoration:none;font-weight:650}
+    .topnav a:hover{background:#E5DFF3}
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
     select,button{font:inherit;border-radius:14px;padding:12px 14px}
     select{background:#FFFDFE;color:#5D536B;border:1px solid #D8CEE6;flex:1;min-width:180px;cursor:pointer;appearance:auto}
@@ -53,6 +56,7 @@
 <body>
 <main>
   <h1>Tanulókártyák</h1>
+  <nav class="topnav"><a href="statisztika.html">📊 Statisztika</a></nav>
   <div class="toolbar">
     <select id="category" aria-label="Munkalap választása" disabled><option>Betöltés…</option></select>
     <label class="order-toggle"><input id="order" type="checkbox"> Véletlenszerű sorrend</label>
@@ -91,6 +95,7 @@
 // Az Excel fájl neve a GitHub-tárhely gyökérkönyvtárában.
 const EXCEL_FILE = 'studyflow.xlsx';
 const STORAGE_PREFIX = 'studyflow-v2:';
+const HISTORY_KEY = 'studyflow-daily-history-v1';
 const $ = id => document.getElementById(id);
 let sheets = [];
 let active = null;
@@ -236,6 +241,26 @@ function fitCardWords() {
 }
 function flip() { if (current) { flipped = !flipped; renderCard(); } }
 window.addEventListener('resize', () => { if (current) requestAnimationFrame(fitCardWords); });
+// Napi gyakorlási események: a korábbi megtanult jelölésektől függetlenül tároljuk.
+function recordPractice(kind) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+    const history = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    const d = new Date();
+    const day = [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+    const entry = history[day] && typeof history[day] === 'object' ? history[day] : {known:0,missed:0,sheets:{}};
+    entry.known = (Number(entry.known)||0) + (kind === 'learn' ? 1 : 0);
+    entry.missed = (Number(entry.missed)||0) + (kind === 'again' ? 1 : 0);
+    if (!entry.sheets || typeof entry.sheets !== 'object') entry.sheets = {};
+    const name = active.name;
+    const sh = entry.sheets[name] || {known:0,missed:0};
+    sh.known = (Number(sh.known)||0) + (kind === 'learn' ? 1 : 0);
+    sh.missed = (Number(sh.missed)||0) + (kind === 'again' ? 1 : 0);
+    entry.sheets[name] = sh;
+    history[day] = entry;
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch (err) { console.warn('A statisztika mentése nem sikerült:', err); }
+}
 function next(kind) {
   if (!current || !active) return;
   if (kind === 'learn') {
@@ -245,6 +270,7 @@ function next(kind) {
   } else {
     roundMissed.add(current.id);
   }
+  recordPractice(kind);
   current = null;
   showCard();
 }
