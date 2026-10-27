@@ -95,3 +95,10 @@
 .chip-university,.calendar-page .chip-university{background:#cbdde7;color:#38556a}
 .calendar-event-card.card-university{background:#f3f7fa}
 .tasks-page .task-category-filters label:has(input[value="university"]){background:#f3f7fa}
+
+/* Naptár kategóriák: egyetlen kiválasztott kategória, a napi részletek alatt */
+.calendar-page #calendarFilters{margin:14px 0 8px}
+.calendar-page #calendarFilters .category-filter{border:1px solid #e9e4e7;border-radius:30px;padding:8px 13px;background:#fff;color:#655f68;font:inherit;font-size:.84rem;cursor:pointer;box-shadow:none}
+.calendar-page #calendarFilters .category-filter.active{background:#f3f0f5;border-color:#c6b8cb;color:#453c4d;font-weight:700}
+.calendar-page #calendarFilters .category-filter:hover{background:#f7f5f8}
+.calendar-page #calendarFilters .category-filter:focus-visible{outline:2px solid #8e789a;outline-offset:2px}
