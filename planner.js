@@ -6,7 +6,7 @@ function shift(date,n){let d=new Date(date+'T12:00:00');d.setDate(d.getDate()+n)
 function human(date){return new Intl.DateTimeFormat('hu-HU',{month:'long',day:'numeric',weekday:'long'}).format(new Date(date+'T12:00:00'))}
 function weekStart(date){let d=new Date(date+'T12:00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);return localDate(d)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function label(t){return {task:'Teendő',study:'Tanulás',event:'Program',exam:'ZH',deadline:'Határidő',bblooms:'Bblooms 🌸'}[t]||'Esemény'}
+function label(t){return {task:'Teendő',study:'Tanulás',event:'Program',exam:'ZH',deadline:'Határidő',bblooms:'Bblooms 🌸',university:'Egyetem 🎓'}[t]||'Esemény'}
 function isTodo(e){return e.type==='task'||e.type==='study'}
 function sorted(a){return [...a].sort((x,y)=>x.date.localeCompare(y.date)||(x.time||'').localeCompare(y.time||''))}
 async function load(){try{let r=await fetch('/api/planner',{cache:'no-store'});if(!r.ok)throw Error('API');let data=await r.json();entries=Array.isArray(data.items)?data.items:[];online=true;status('Online szinkronizálás aktív ♡')}catch{try{entries=JSON.parse(localStorage.getItem('studyflow-planner-v1')||'[]')}catch{entries=[]}status('Helyi mentés aktív. A készülékek közötti szinkronhoz Cloudflare Pages + D1 szükséges.')}render()}
@@ -14,6 +14,29 @@ function status(s){if($('syncStatus'))$('syncStatus').textContent=s}
 async function save(){localStorage.setItem('studyflow-planner-v1',JSON.stringify(entries));render();if(online){try{let r=await fetch('/api/planner',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:entries})});if(!r.ok)throw Error('save');status('Mentve és szinkronizálva ♡')}catch{online=false;status('Az online mentés nem sikerült; a módosítás ezen a készüléken megmaradt.')}}}
 function uid(){return crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`}
 function add(title,date,type,time='',minutes=0){entries.push({id:uid(),title:title.trim(),date,type,time,minutes:Number(minutes)||0,done:false})}
+function addRepeating(title,date,type,time,minutes,repeat,until){
+ if(repeat==='none'){add(title,date,type,time,minutes);return 1}
+ if(!['daily','weekly','monthly'].includes(repeat)||!/^\d{4}-\d{2}-\d{2}$/.test(until)||until<date)throw Error('Adj meg egy érvényes ismétlődési végdátumot.');
+ const start=new Date(date+'T12:00:00'),end=new Date(until+'T12:00:00');
+ if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime()))throw Error('Érvénytelen dátum.');
+ const dates=[];
+ for(let i=0;i<367;i++){
+  let next;
+  if(repeat==='daily')next=shift(date,i);
+  else if(repeat==='weekly')next=shift(date,i*7);
+  else{
+   const target=new Date(start.getFullYear(),start.getMonth()+i,1,12);
+   const last=new Date(target.getFullYear(),target.getMonth()+1,0,12).getDate();
+   target.setDate(Math.min(start.getDate(),last));next=localDate(target);
+  }
+  if(next>until)break;
+  if(dates.length===366)throw Error('Legfeljebb 366 ismétlődő alkalom hozható létre.');
+  dates.push(next);
+ }
+ const group=uid();
+ dates.forEach(day=>{add(title,day,type,time,minutes);Object.assign(entries[entries.length-1],{repeatGroup:group,repeat,repeatUntil:until})});
+ return dates.length
+}
 function exam(title,date,time,minutes,studytime){const group=uid();entries.push({id:uid(),group,title,date,type:'exam',time,minutes:0,done:false});for(let i=7;i>=1;i--)entries.push({id:uid(),group,title:`${title} – felkészülés`,date:shift(date,-i),type:'study',time:studytime,minutes:Number(minutes)||25,done:false})}
 function itemHtml(e){const missed=isTodo(e)&&e.date<today&&!e.done&&!e.makeupFor;return `<div class="task ${e.done?'done':''}">${isTodo(e)?`<input type="checkbox" data-toggle="${esc(e.id)}" ${e.done?'checked':''} aria-label="Teljesítve: ${esc(e.title)}">`:'<span class="emoji" style="font-size:1.2rem">📌</span>'}<div class="info"><strong>${esc(e.title)}</strong><small>${esc(label(e.type))} · ${esc(e.date)}${e.time?' · '+esc(e.time):''}${e.minutes?' · '+e.minutes+' perc':''}${e.makeupFor?' · Pótlás':''}${missed?' · Elmaradt':''}${e.tentative?' · Ellenőrizendő':''}</small>${e.notes?`<small>${esc(e.notes)}</small>`:''}</div><div class="actions">${missed?`<button data-makeup="${esc(e.id)}">Pótlás</button>`:''}<button data-edit="${esc(e.id)}" aria-label="Szerkesztés">✎</button><button class="danger" data-delete="${esc(e.id)}" aria-label="Törlés">✕</button></div></div>`}
 function renderHome(){if(!$('events'))return;$('today').textContent=human(today);let todayEvents=sorted(entries.filter(e=>e.date===today&&!isTodo(e)));$('events').innerHTML=todayEvents.length?todayEvents.map(e=>`<div class="event"><time>${esc(e.time||'Egész nap')}</time><span class="bar ${e.type==='exam'?'exam':e.type==='deadline'?'deadline':''}"></span><div><strong>${esc(e.title)}</strong><div class="muted small">${label(e.type)}</div></div></div>`).join(''):'<p class="empty">Mára nincs bejegyzett program, ZH vagy határidő. ♡</p>'}
@@ -21,6 +44,7 @@ function renderTasks(){if(!$('tasks'))return;let ws=weekStart(today),end=shift(w
 function calendarMatches(e){const checked=[...document.querySelectorAll('#calendarFilters input:checked')].map(x=>x.value);const query=($('calendarSearch')?.value||'').toLocaleLowerCase('hu-HU').trim();return checked.includes(e.type)&&(!query||`${e.title} ${e.notes||''}`.toLocaleLowerCase('hu-HU').includes(query))}
 function shortCalendarLabel(e){
  if(e.type==='bblooms')return 'Bblooms';
+ if(e.type==='university')return 'Egyetem';
  if(e.type==='exam')return 'ZH';
  if(e.type==='deadline')return 'Leadás';
  if(e.type==='study')return 'Tanulás';
@@ -59,9 +83,30 @@ function render(){if($('todayDate'))$('todayDate').textContent=`Ma: ${new Intl.D
 document.addEventListener('click',async e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.tab){tab=b.dataset.tab;renderTasks()}if(b.dataset.view){view=b.dataset.view;renderCalendar()}if(b.dataset.day){selected=b.dataset.day;renderCalendar()}if(b.dataset.edit){const x=entries.find(x=>x.id===b.dataset.edit);if(x&&$('editForm')){let f=$('editForm');for(let k of ['id','title','date','type','time','minutes','notes'])f.elements[k].value=x[k]??'';$('editPanel').hidden=false;$('editPanel').scrollIntoView({behavior:'smooth',block:'start'})}}if(b.dataset.delete){let x=entries.find(x=>x.id===b.dataset.delete);if(x&&confirm('Biztosan törlöd ezt a bejegyzést?')){entries=entries.filter(y=>y.id!==x.id);await save()}}if(b.dataset.makeup){let x=entries.find(x=>x.id===b.dataset.makeup);if(!x)return;let date=prompt('Melyik dátumra szeretnéd a pótlást? (ÉÉÉÉ-HH-NN)',today);if(!date)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<=x.date){alert('Adj meg az eredeti napnál későbbi, érvényes dátumot.');return}if(entries.some(y=>y.makeupFor===x.id&&!y.done)){alert('Ehhez már van tervezett pótlás.');return}let item={...x,id:uid(),date,done:false,makeupFor:x.id};entries.push(item);await save()}});
 document.addEventListener('change',async e=>{if(e.target.matches('[data-toggle]')){let x=entries.find(x=>x.id===e.target.dataset.toggle);if(x){x.done=e.target.checked;if(x.makeupFor&&x.done){let original=entries.find(y=>y.id===x.makeupFor);if(original)original.done=true}await save()}}});
 if($('prev')){$('prev').onclick=()=>{if(view==='month')cursor.setMonth(cursor.getMonth()-1,1);else cursor.setDate(cursor.getDate()-(view==='week'?7:1));selected=localDate(cursor);renderCalendar()};$('next').onclick=()=>{if(view==='month')cursor.setMonth(cursor.getMonth()+1,1);else cursor.setDate(cursor.getDate()+(view==='week'?7:1));selected=localDate(cursor);renderCalendar()}}
-if($('taskForm')){$('taskForm').elements.date.value=today;$('taskForm').onsubmit=async e=>{e.preventDefault();let f=e.target;add(f.elements.title.value,f.elements.date.value,f.elements.type.value,f.elements.time.value,f.elements.minutes.value);f.reset();f.elements.date.value=today;await save()}}
+if($('taskForm')){$('taskForm').elements.date.value=today;$('taskForm').onsubmit=async e=>{e.preventDefault();let f=e.target;let repeat=f.elements.repeat.value,until=f.elements.repeatUntil.value;
+if(repeat!=='none'&&(!until||until<f.elements.date.value)){alert('Ismétlődésnél adj meg a kezdőnapnál nem korábbi végdátumot.');return}
+try{
+const count=addRepeating(f.elements.title.value,f.elements.date.value,f.elements.type.value,f.elements.time.value,f.elements.minutes.value,repeat,until);
+f.reset();f.elements.date.value=today;await save();
+if(repeat!=='none')alert(`${count} ismétlődő bejegyzés létrehozva. 🌷`);
+}catch(err){alert(err.message)}}}
 if($('examForm')){$('examForm').elements.date.value=shift(today,8);$('examForm').onsubmit=async e=>{e.preventDefault();let f=e.target;exam(f.elements.title.value,f.elements.date.value,f.elements.time.value,f.elements.minutes.value,f.elements.studytime.value);f.reset();f.elements.date.value=shift(today,8);await save();alert('A ZH és a megelőző 7 nap tanulási alkalmai létrejöttek! 🎀')}}
-if($('eventForm')){$('eventForm').elements.date.value=today;$('eventForm').onsubmit=async e=>{e.preventDefault();let f=e.target,type=f.elements.type.value,title=f.elements.title.value,date=f.elements.date.value;if(type==='exam')exam(title,date,f.elements.time.value,f.elements.minutes.value,'18:00');else {add(title,date,type,f.elements.time.value,type==='study'?f.elements.minutes.value:0);entries[entries.length-1].notes=f.elements.notes.value.trim()}if(type==='exam'){entries[entries.length-8].notes=f.elements.notes.value.trim()}selected=date;cursor=new Date(date+'T12:00:00');f.reset();f.elements.date.value=today;await save()}}
+if($('eventForm')){$('eventForm').elements.date.value=today;$('eventForm').onsubmit=async e=>{
+ e.preventDefault();const f=e.target,type=f.elements.type.value,title=f.elements.title.value,date=f.elements.date.value;
+ const repeat=f.elements.repeat.value,until=f.elements.repeatUntil.value;
+ if(repeat!=='none'&&(!until||until<date)){alert('Az ismétlődéshez válassz megfelelő végdátumot.');return}
+ try{
+  if(type==='exam'&&repeat==='none'){
+   exam(title,date,f.elements.time.value,f.elements.minutes.value,'18:00');
+   entries[entries.length-8].notes=f.elements.notes.value.trim();
+  }else{
+   const count=addRepeating(title,date,type,f.elements.time.value,type==='study'?f.elements.minutes.value:0,repeat,until);
+   entries.slice(-count).forEach(item=>item.notes=f.elements.notes.value.trim());
+   if(type==='exam'&&repeat!=='none')alert('Az ismétlődő ZH-k létrejöttek. Az automatikus 7 napos felkészülés csak egyszeri ZH-nál készül.');
+  }
+  selected=date;cursor=new Date(date+'T12:00:00');f.reset();f.elements.date.value=today;await save();
+ }catch(err){alert(err.message)}
+}}
 if($('importDates'))$('importDates').onclick=async()=>{const pack=window.STUDYFLOW_DATE_IMPORT;if(!pack){alert('Az importálási fájl hiányzik.');return}const incoming=pack.items;const existing=new Set(entries.map(x=>x.id));const added=incoming.filter(x=>!existing.has(x.id)&&!entries.some(e=>e.date===x.date&&e.title===x.title&&e.type===x.type));if(!added.length){$('importResult').textContent='Minden ismert dátum már szerepel a Plannerben. ♡';return}if(!confirm(`${added.length} új bejegyzés hozzáadása a naptárhoz? A meglévő adatok megmaradnak.`))return;entries.push(...added);await save();$('importResult').textContent=`${added.length} bejegyzés hozzáadva. ${pack.unknown.length} dátum nélküli tétel külön listában maradt.`;};
 load();
 

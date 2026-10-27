@@ -89,3 +89,9 @@
 .tasks-page .task-category-filters label:has(input[value="deadline"]){background:#fffcf4}
 .tasks-page .task-category-filters label:has(input[value="bblooms"]){background:#fff8f3}
 .tasks-page .task-category-filters label:has(input:not(:checked)){opacity:.48;background:#fff}
+
+/* Egyetem kategória – visszafogott zsályakék */
+.calendar .day.day-university,.calendar-page .day.day-university{background:#f3f7fa}
+.chip-university,.calendar-page .chip-university{background:#cbdde7;color:#38556a}
+.calendar-event-card.card-university{background:#f3f7fa}
+.tasks-page .task-category-filters label:has(input[value="university"]){background:#f3f7fa}
