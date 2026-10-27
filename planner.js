@@ -41,7 +41,7 @@ function renderCalendar(){
  }else if(view==='week'){
   const start=weekStart(localDate(d));for(let i=0;i<7;i++)dates.push(shift(start,i));
  }else dates.push(localDate(d));
- $('monthTitle').textContent=view==='month'?new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long'}).format(d):view==='week'?`${dates[0]} – ${dates[6]}`:human(d);
+ $('monthTitle').textContent=view==='month'?`♡ ${new Intl.DateTimeFormat('hu-HU',{month:'long'}).format(d)} ${year} ♡`:`♡ ${new Intl.DateTimeFormat('hu-HU',{month:'long'}).format(d)} ${year} · ${dates[0].slice(8)}–${dates[6].slice(8)}. ♡`;
  const filtered=entries.filter(calendarMatches),byDate=new Map();
  for(const e of filtered){if(!byDate.has(e.date))byDate.set(e.date,[]);byDate.get(e.date).push(e)}
  $('calendar').innerHTML=`<div class="calendar ${view==='day'?'calendar-single':''}">${view!=='day'?['H','K','Sze','Cs','P','Szo','V'].map(x=>`<div class="weekdays">${x}</div>`).join(''):''}${dates.map(date=>{
@@ -55,7 +55,7 @@ function renderCalendar(){
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
 }
 
-function render(){renderHome();renderTasks();renderCalendar()}
+function render(){if($('todayDate'))$('todayDate').textContent=`Ma: ${new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())}`;renderHome();renderTasks();renderCalendar()}
 document.addEventListener('click',async e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.tab){tab=b.dataset.tab;renderTasks()}if(b.dataset.view){view=b.dataset.view;renderCalendar()}if(b.dataset.day){selected=b.dataset.day;renderCalendar()}if(b.dataset.edit){const x=entries.find(x=>x.id===b.dataset.edit);if(x&&$('editForm')){let f=$('editForm');for(let k of ['id','title','date','type','time','minutes','notes'])f.elements[k].value=x[k]??'';$('editPanel').hidden=false;$('editPanel').scrollIntoView({behavior:'smooth',block:'start'})}}if(b.dataset.delete){let x=entries.find(x=>x.id===b.dataset.delete);if(x&&confirm('Biztosan törlöd ezt a bejegyzést?')){entries=entries.filter(y=>y.id!==x.id);await save()}}if(b.dataset.makeup){let x=entries.find(x=>x.id===b.dataset.makeup);if(!x)return;let date=prompt('Melyik dátumra szeretnéd a pótlást? (ÉÉÉÉ-HH-NN)',today);if(!date)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<=x.date){alert('Adj meg az eredeti napnál későbbi, érvényes dátumot.');return}if(entries.some(y=>y.makeupFor===x.id&&!y.done)){alert('Ehhez már van tervezett pótlás.');return}let item={...x,id:uid(),date,done:false,makeupFor:x.id};entries.push(item);await save()}});
 document.addEventListener('change',async e=>{if(e.target.matches('[data-toggle]')){let x=entries.find(x=>x.id===e.target.dataset.toggle);if(x){x.done=e.target.checked;if(x.makeupFor&&x.done){let original=entries.find(y=>y.id===x.makeupFor);if(original)original.done=true}await save()}}});
 if($('prev')){$('prev').onclick=()=>{if(view==='month')cursor.setMonth(cursor.getMonth()-1,1);else cursor.setDate(cursor.getDate()-(view==='week'?7:1));selected=localDate(cursor);renderCalendar()};$('next').onclick=()=>{if(view==='month')cursor.setMonth(cursor.getMonth()+1,1);else cursor.setDate(cursor.getDate()+(view==='week'?7:1));selected=localDate(cursor);renderCalendar()}}

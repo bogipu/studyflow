@@ -23,3 +23,27 @@
 .card-exam{background:#fff1f5;border-color:#e59aa6}.card-deadline{background:#fff8e9;border-color:#e6be70}.card-event{background:#f1f2ff;border-color:#9ca9dd}.card-study{background:#eef8f1;border-color:#83b99b}.card-task{background:#fff1f8;border-color:#dda5c4}.card-bblooms{background:#fff1e9;border-color:#eba98e}
 .filter-row label:has(input[value="bblooms"]){background:#fff1e9;border-color:#ffe1d3}
 @media(max-width:500px){.calendar{gap:3px}.calendar .day{min-height:68px;padding:5px 2px}.event-chip{font-size:.55rem;padding:3px 0}.calendar .day strong{font-size:.76rem}}
+
+/* Naptár: visszafogott, szinte fehér pasztell felület */
+.calendar-page{background:#fcfbfa;color:#5d5960}
+.calendar-page .hero{background:#f8f6f5;border:1px solid #f0eae8}
+.calendar-page .hero h1{color:#746371}
+.calendar-page .hero p{color:#807981}
+.calendar-page .hero .eyebrow{color:#988994}
+.calendar-page .hero .today-date{font-weight:650;color:#6d686f;margin:9px 0 4px}
+.calendar-page .panel{border-color:#ece9e7;box-shadow:0 5px 18px #514c5008}
+.calendar-page h2{color:#716572}
+.calendar-page button:not(.day){background:#eee9ed;color:#675d68}
+.calendar-page .tabs button.active{background:#b5a0b2;color:#fff}
+.calendar-page .filter-row label{background:#fff;border-color:#eae6e8;color:#67616a}
+.calendar-page .filter-row label:has(input[value="bblooms"]){background:#fff7f2;border-color:#f3ded0}
+.calendar-page .day.day-exam{background:#fff8fa}
+.calendar-page .day.day-deadline{background:#fffcf4}
+.calendar-page .day.day-event{background:#f9f9ff}
+.calendar-page .day.day-study{background:#f7fcf9}
+.calendar-page .day.day-task{background:#fff9fc}
+.calendar-page .day.day-bblooms{background:#fffaf7}
+.calendar-page .day.today{box-shadow:inset 0 0 0 1px #c3b3bd}
+.calendar-page .day.selected{outline-color:#ab96a4}
+.calendar-page .event-chip{color:#473e47}
+.calendar-page .chip-bblooms{background:#ffe1d3}
