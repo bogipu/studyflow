@@ -3,38 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f8f7f2">
-  <title>StudyFlow – Tanulókártyák</title>
+  <meta name="theme-color" content="#FAF5F7">
+  <title>Tanulókártyák</title>
   <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#34443f;background:#f8f7f2;font-synthesis:none}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 10% 5%,#e9f2ec 0,transparent 45%),radial-gradient(circle at 90% 85%,#f7e9e5 0,transparent 42%),#f8f7f2}
-    main{max-width:720px;margin:auto;padding:32px 18px 50px}h1{margin:0;font-size:2rem;letter-spacing:-.04em;color:#3f655c}.sub{color:#7b8b85;margin:7px 0 24px}
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#5D536B;background:#FAF5F7;font-synthesis:none}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#FAF5F7;color:#5D536B}
+    main{max-width:720px;margin:auto;padding:32px 18px 50px}
+    h1{margin:0 0 24px;font-size:2rem;letter-spacing:-.04em;color:#5D536B}
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-    select,button{font:inherit;border-radius:14px;padding:12px 14px}select{background:#fffefa;color:#3c514b;border:1px solid #d7e2da;flex:1;min-width:180px}
-    button{border:0;background:#91b9aa;color:#263f38;cursor:pointer;font-weight:650;transition:filter .2s,transform .2s}button:hover{filter:brightness(.97)}button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowed}
-    .secondary{background:#e5ede8;color:#526d63}.stats{color:#74887f;margin:10px 0 18px;min-height:24px}
+    select,button{font:inherit;border-radius:14px;padding:12px 14px}
+    select{background:#FFFDFE;color:#5D536B;border:1px solid #D8CEE6;flex:1;min-width:180px;cursor:pointer;appearance:auto}
+    button{border:0;background:#A89BC7;color:#332A40;cursor:pointer;font-weight:650;transition:filter .2s,transform .2s}
+    button:hover{filter:brightness(.97)}button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowed}
+    .secondary{background:#EAE3F2;color:#5D536B}
+    .stats{color:#746A80;margin:10px 0 18px;min-height:24px}
     .card-scene{width:100%;height:310px;perspective:1200px;touch-action:pan-y;user-select:none;cursor:pointer;outline:none}
-    .card-scene:focus-visible{outline:3px solid #88b8a6;outline-offset:5px;border-radius:26px}
+    .card-scene:focus-visible{outline:3px solid #A89BC7;outline-offset:5px;border-radius:26px}
     .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.7,.2,1)}
     .card-scene.is-flipped .card-inner{transform:rotateY(180deg)}
-    .card-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;border:1px solid #d7e3d9;border-radius:26px;box-shadow:0 16px 38px #4f71651c;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    .card-front{background:linear-gradient(145deg,#f0f5ed,#e1ede5)}.card-back{background:linear-gradient(145deg,#f7e9e8,#f0dfdf);border-color:#ebd8d5;transform:rotateY(180deg)}
-    .word{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;overflow-wrap:anywhere;color:#39584f}
-    .card-back .word{color:#705953}
-    .actions{display:flex;gap:12px;margin-top:18px}.actions button{flex:1;min-height:54px}.retry{background:#f1d9ca;color:#745344}.learn{background:#c7e3d3;color:#345a49}
-    .message{padding:28px 20px;border-radius:18px;background:#edf2ec;line-height:1.6}.message.error{border:1px solid #d7a6a6}
-    .footer{margin-top:24px;color:#8a9a92;font-size:.85rem;line-height:1.5}.hidden{display:none!important}
+    .card-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;border:1px solid #E6CDD4;border-radius:26px;box-shadow:0 16px 38px #5D536B1C;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .card-front,.card-back{background:#F1DFE2}
+    .card-back{transform:rotateY(180deg)}
+    .word{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;overflow-wrap:anywhere;color:#5D536B}
+    .card-back .word{color:#5D536B}
+    .actions{display:flex;gap:12px;margin-top:18px}.actions button{flex:1;min-height:54px}
+    .retry{background:#F2E4E7;color:#5D536B}
+    .learn{background:#DDEAF1;color:#5D536B}
+    .message{padding:28px 20px;border-radius:18px;background:#F4EBF1;line-height:1.6}
+    .message.error{border:1px solid #C49AAA}
+    .hidden{display:none!important}
     @media(max-width:460px){main{padding:20px 14px}.card-scene{height:270px}.actions{gap:8px}.actions button{padding:12px 8px;font-size:.92rem}}
     @media(prefers-reduced-motion:reduce){.card-inner{transition:none}}
   </style>
 </head>
 <body>
 <main>
-  <h1>StudyFlow</h1>
-  <p class="sub">Magyar–angol tanulókártyák · Excelből</p>
+  <h1>Tanulókártyák</h1>
   <div class="toolbar">
     <select id="category" aria-label="Munkalap választása" disabled><option>Betöltés…</option></select>
-    <select id="order" aria-label="Tanulási sorrend"><option value="random">🔀 Véletlenszerű</option><option value="sequential">☰ Excel-sorrend</option></select>
+    <select id="order" aria-label="Tanulási sorrend"><option value="random">Véletlenszerű</option><option value="sequential">Sorrendben</option></select>
     <button id="reload" class="secondary" type="button">Frissítés</button>
     <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
   </div>
@@ -52,7 +60,6 @@
       <button id="learned" class="learn" type="button">Megtanultam →</button>
     </div>
   </div>
-  <p class="footer">Telefonon: húzd balra a kártyát az ismétléshez, jobbra a megtanulthoz. A haladást ez a böngésző menti. Az Excel módosítása után a GitHubon cseréld le a fájlt, majd nyomd meg a Frissítés gombot.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
