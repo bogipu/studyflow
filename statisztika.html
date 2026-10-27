@@ -6,17 +6,20 @@
 </style></head><body><main>
 <header><h1>Statisztika 📊</h1><a href="index.html">← Tanulókártyák</a></header>
 <div class="controls"><label for="period">Időszak:</label><select id="period"><option value="today">Mai nap</option><option value="week">Ez a hét</option><option value="month" selected>Ez a hónap</option><option value="year">Ez az év</option><option value="all">Összesen</option></select></div>
+<p id="onlineStatus" class="muted" aria-live="polite">Online statisztika betöltése…</p>
 <div class="cards"><div class="tile"><span>Gyakorolt kártyák</span><strong id="total">0</strong></div><div class="tile"><span>Tudtam</span><strong id="known">0</strong></div><div class="tile"><span>Újra kértem</span><strong id="missed">0</strong></div></div>
 <section class="panel"><div class="calhead"><h2>Tanulási naptár</h2><div class="nav"><button id="prev" aria-label="Előző hónap">‹</button><strong id="monthTitle"></strong><button id="next" aria-label="Következő hónap">›</button></div></div><div class="weekdays"><span>H</span><span>K</span><span>Sze</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span></div><div id="calendar" class="calendar"></div><div class="legend"><span><i class="dot" style="background:#D7EBDD"></i>50+ zöld</span><span><i class="dot" style="background:#F7EBC1"></i>25–49 sárga</span><span><i class="dot" style="background:#F2DDE9"></i>1–24 rózsaszín</span><span><i class="dot" style="background:#F4D8DB"></i>0 piros</span><span><i class="dot" style="background:#F5F2F6;border:1px solid #ddd"></i>Nincs adat</span></div><div id="detail" class="detail" aria-live="polite">Kattints egy napra a részletekért.</div></section>
 <section class="panel"><h2>Munkalaponként</h2><div id="sheets" class="rows"></div></section>
-<p class="muted">A statisztika minden „Megtanultam” és „Újra kérem” választ számol, az ismétléseket is. Az eredmények ebben a böngészőben tárolódnak. Másik eszközön nem jelennek meg automatikusan. A statisztika bevezetése előtti napokhoz nincs visszamenőleges adat.</p>
+<p class="muted">A statisztika minden „Megtanultam” és „Újra kérem” választ számol, az ismétléseket is. Az eredmények a Cloudflare online adatbázisában tárolódnak, és minden eszközön ugyanazok. A statisztika nyilvános hozzáférés ellen nincs védve. A statisztika bevezetése előtti napokhoz nincs visszamenőleges adat.</p>
 </main><script>
 'use strict';
 const KEY='studyflow-daily-history-v1', $=id=>document.getElementById(id);
+const ONLINE_USER='studyflow-kozos-statisztika-v1';
+let onlineHistory={};
 const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12);
 let displayedMonth=new Date(today.getFullYear(),today.getMonth(),1,12),selectedDate=null;
 function dayKey(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
-function readHistory(){try{const h=JSON.parse(localStorage.getItem(KEY)||'{}');return h&&typeof h==='object'&&!Array.isArray(h)?h:{}}catch{return {}}}
+function readHistory(){return onlineHistory}
 function count(v){return Math.max(0,Number(v)||0)}
 function totals(entry){return {known:count(entry?.known),missed:count(entry?.missed)}}
 function dateAt(y,m,d){return new Date(y,m,d,12)}
@@ -25,5 +28,37 @@ function renderTotals(history){const period=$('period').value,start=startDate(pe
 function renderDetail(history){if(!selectedDate){$('detail').textContent='Kattints egy napra a részletekért.';return}const e=history[selectedDate],t=totals(e);const knownDates=Object.keys(history).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();if(!e&&(!knownDates.length||selectedDate<knownDates[0]||selectedDate>dayKey(today))){$('detail').textContent=`${selectedDate}: erről a napról nincs adat.`;return}$('detail').textContent=`${selectedDate} · ${t.known+t.missed} átnézett kártya · ${t.known} tudtam · ${t.missed} újra kértem.`}
 function renderCalendar(history){const y=displayedMonth.getFullYear(),m=displayedMonth.getMonth(),first=dateAt(y,m,1),days=dateAt(y,m+1,0).getDate(),offset=(first.getDay()+6)%7;const monthName=new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long'}).format(first);$('monthTitle').textContent=monthName;$('next').disabled=y===today.getFullYear()&&m===today.getMonth();const cal=$('calendar');cal.replaceChildren();for(let i=0;i<offset;i++){const blank=document.createElement('div');blank.className='blank';cal.append(blank)}const knownDates=Object.keys(history).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort(),firstKnown=knownDates[0]||null;for(let n=1;n<=days;n++){const date=dayKey(dateAt(y,m,n)),e=history[date],t=totals(e),total=t.known+t.missed;const hasCoverage=date<=dayKey(today)&&firstKnown!==null&&date>=firstKnown;const category=!hasCoverage?'unknown':total===0?'red':total<25?'pink':total<50?'yellow':'green';const button=document.createElement('button');button.type='button';button.className=`day ${category}${date===dayKey(today)?' today':''}${date===selectedDate?' selected':''}`;button.title=`${date}: ${hasCoverage?total+' kártya':'nincs adat'}`;button.setAttribute('aria-label',button.title);const number=document.createElement('span');number.className='num';number.textContent=n;const amount=document.createElement('small');amount.textContent=hasCoverage?String(total):'–';button.append(number,amount);button.addEventListener('click',()=>{selectedDate=date;renderCalendar(history);renderDetail(history)});cal.append(button)}}
 function render(){const history=readHistory();renderTotals(history);renderCalendar(history);renderDetail(history)}
-$('prev').addEventListener('click',()=>{displayedMonth=dateAt(displayedMonth.getFullYear(),displayedMonth.getMonth()-1,1);selectedDate=null;render()});$('next').addEventListener('click',()=>{if(!$('next').disabled){displayedMonth=dateAt(displayedMonth.getFullYear(),displayedMonth.getMonth()+1,1);selectedDate=null;render()}});$('period').addEventListener('change',render);render();
+$('prev').addEventListener('click',()=>{displayedMonth=dateAt(displayedMonth.getFullYear(),displayedMonth.getMonth()-1,1);selectedDate=null;render()});$('next').addEventListener('click',()=>{if(!$('next').disabled){displayedMonth=dateAt(displayedMonth.getFullYear(),displayedMonth.getMonth()+1,1);selectedDate=null;render()}});$('period').addEventListener('change',render);
+async function refreshOnline() {
+  try {
+    const response = await fetch('/api/stats?user='+encodeURIComponent(ONLINE_USER), {cache:'no-store'});
+    if (!response.ok) throw new Error('API: '+response.status);
+    const payload = await response.json();
+    if (!Array.isArray(payload.results)) throw new Error('Hibás API válasz');
+    const history={};
+    for (const row of payload.results) {
+      const day=String(row.day||'');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+      const result=row.result==='known'?'known':row.result==='missed'?'missed':null;
+      if (!result) continue;
+      const name=String(row.sheet_name||'Egyéb');
+      const count=Math.max(0,Number(row.count)||0);
+      if (!history[day]) history[day]={known:0,missed:0,sheets:{}};
+      if (!history[day].sheets[name]) history[day].sheets[name]={known:0,missed:0};
+      history[day][result]+=count;
+      history[day].sheets[name][result]+=count;
+    }
+    onlineHistory=history;
+    const status=$('onlineStatus');
+    status.textContent='Online statisztika frissítve.';
+    render();
+  } catch (err) {
+    $('onlineStatus').textContent='⚠️ Az online statisztika most nem érhető el. Próbáld újra később.';
+    console.warn(err);
+  }
+}
+render();
+refreshOnline();
+window.addEventListener('focus',refreshOnline);
+setInterval(refreshOnline,30000);
 </script></body></html>
