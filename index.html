@@ -65,7 +65,7 @@
   </div>
   <div id="cloudPanel" style="margin:0 0 14px;padding:12px 14px;border:1px solid #EADFE9;border-radius:14px;background:#FFFDFE;font-size:.9rem">
     <label for="syncCode"><strong>☁️ Online statisztika – saját kód</strong></label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><input id="syncCode" type="text" autocomplete="off" spellcheck="false" placeholder="Írj be egy hosszú, egyedi kódot" style="flex:1;min-width:170px;padding:10px;border:1px solid #D8CEE6;border-radius:10px"><button id="saveSync" class="secondary" type="button">Kód mentése</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><input id="syncCode" type="text" autocomplete="off" spellcheck="false" placeholder="Írj be legalább 2 karaktert" style="flex:1;min-width:170px;padding:10px;border:1px solid #D8CEE6;border-radius:10px"><button id="saveSync" class="secondary" type="button">Kód mentése</button></div>
     <div id="syncStatus" aria-live="polite" style="margin-top:7px;color:#746A80">A kódot a statisztikaoldal is használja. Másik eszközön ugyanazt add meg.</div>
   </div>
   <div id="stats" class="stats" aria-live="polite"></div>
@@ -109,7 +109,7 @@ $('syncCode').value = syncCode();
 updateSyncStatus();
 $('saveSync').addEventListener('click', () => {
   const code = $('syncCode').value.trim();
-  if (code.length < 16 || code.length > 128) { updateSyncStatus('Legalább 16 karakteres, egyedi kódot adj meg.'); return; }
+  if (code.length < 2 || code.length > 128) { updateSyncStatus('Legalább 2 karakteres, egyedi kódot adj meg.'); return; }
   if (syncCode() && syncCode() !== code && getPending().length) { updateSyncStatus('Előbb várd meg a korábbi mentések feltöltését, mielőtt kódot váltasz.'); return; }
   localStorage.setItem(SYNC_KEY, code);
   updateSyncStatus('☁️ Kód mentve. Az új válaszokat online is rögzítjük.');
