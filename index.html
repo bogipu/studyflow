@@ -17,13 +17,16 @@
     button{border:0;background:#A89BC7;color:#332A40;cursor:pointer;font-weight:650;transition:filter .2s,transform .2s}
     button:hover{filter:brightness(.97)}button:active{transform:scale(.98)}button:disabled{opacity:.45;cursor:not-allowed}
     .secondary{background:#EAE3F2;color:#5D536B}
+    .order-toggle{display:inline-flex;align-items:center;gap:9px;padding:10px 12px;color:#5D536B;cursor:pointer;white-space:nowrap}
+    .order-toggle input{width:19px;height:19px;accent-color:#A89BC7;cursor:pointer;margin:0}
     .stats{color:#746A80;margin:10px 0 18px;min-height:24px}
     .card-scene{width:100%;height:310px;perspective:1200px;touch-action:pan-y;user-select:none;cursor:pointer;outline:none}
     .card-scene:focus-visible{outline:3px solid #A89BC7;outline-offset:5px;border-radius:26px}
     .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.7,.2,1)}
     .card-scene.is-flipped .card-inner{transform:rotateY(180deg)}
     .card-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;border:1px solid #E6CDD4;border-radius:26px;box-shadow:0 16px 38px #5D536B1C;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    .card-front,.card-back{background:#F1DFE2}
+    .card-front{background:#F1DFE2}
+    .card-back{background:#E5DFF3;border-color:#D5C9E7}
     .card-back{transform:rotateY(180deg)}
     .word{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;overflow-wrap:anywhere;color:#5D536B}
     .card-back .word{color:#5D536B}
@@ -42,7 +45,7 @@
   <h1>Tanulókártyák</h1>
   <div class="toolbar">
     <select id="category" aria-label="Munkalap választása" disabled><option>Betöltés…</option></select>
-    <select id="order" aria-label="Tanulási sorrend"><option value="random">Véletlenszerű</option><option value="sequential">Sorrendben</option></select>
+    <label class="order-toggle"><input id="order" type="checkbox"> Véletlenszerű sorrend</label>
     <button id="reload" class="secondary" type="button">Frissítés</button>
     <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
   </div>
@@ -78,7 +81,7 @@ let suppressClick = false;
 let pending = [];
 let roundRetry = [];
 let orderMode = localStorage.getItem('studyflow-order') === 'sequential' ? 'sequential' : 'random';
-$('order').value = orderMode;
+$('order').checked = orderMode === 'random';
 function shuffle(items) {
   const a = [...items];
   for (let i = a.length - 1; i > 0; i--) {
@@ -210,7 +213,7 @@ async function loadExcel() {
   } finally { $('reload').disabled = false; }
 }
 $('order').addEventListener('change', e => {
-  orderMode = e.target.value;
+  orderMode = e.target.checked ? 'random' : 'sequential';
   try { localStorage.setItem('studyflow-order', orderMode); } catch {}
   current = null;
   buildQueue();
