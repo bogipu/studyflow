@@ -29,7 +29,7 @@
     .card-front{background:var(--card-front,#F1DFE2);border-color:var(--card-front-border,#E6CDD4)}
     .card-back{background:var(--card-back,#E5DFF3);border-color:var(--card-back-border,#D5C9E7)}
     .card-back{transform:rotateY(180deg)}
-    .word{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;overflow-wrap:anywhere;color:#5D536B}
+    .word{display:block;width:100%;max-width:100%;font-size:2.8rem;font-weight:700;line-height:1.25;overflow-wrap:anywhere;white-space:pre-wrap;color:#5D536B}
     .card-back .word{color:#5D536B}
     .actions{display:flex;gap:12px;margin-top:18px}.actions button{flex:1;min-height:54px}
     .retry{background:#F2E4E7;color:#5D536B}
@@ -164,6 +164,7 @@ function showCard() {
   flipped = false;
   renderCard();
   $('message').classList.add('hidden'); $('study').classList.remove('hidden');
+  requestAnimationFrame(fitCardWords);
 }
 function renderCard() {
   if (!current) return;
@@ -171,8 +172,33 @@ function renderCard() {
   $('backWord').textContent = current.answer;
   $('card').classList.toggle('is-flipped', flipped);
   $('card').setAttribute('aria-pressed', String(flipped));
+  requestAnimationFrame(fitCardWords);
+}
+// Hosszú szavaknál/kifejezéseknél a kártya magasabb lesz,
+// szükség esetén a betűméret is csökken, de legalább 20 px marad.
+function fitCardWords() {
+  const scene = $('card');
+  if (!current || !$('study') || $('study').classList.contains('hidden')) return;
+  const mobile = window.matchMedia('(max-width:460px)').matches;
+  const baseHeight = mobile ? 270 : 310;
+  const maxHeight = 580;
+  scene.style.height = baseHeight + 'px';
+  const words = [$('frontWord'), $('backWord')];
+  for (const word of words) word.style.fontSize = '44px';
+  // Először növeljük a kártyát, majd szükség esetén csökkentjük a betűt.
+  for (let height = baseHeight; height <= maxHeight; height += 20) {
+    scene.style.height = Math.min(height, maxHeight) + 'px';
+    if (words.every(word => word.scrollHeight <= word.parentElement.clientHeight - 52 && word.scrollWidth <= word.clientWidth + 2)) return;
+  }
+  for (let font = 42; font >= 20; font -= 2) {
+    for (const word of words) word.style.fontSize = font + 'px';
+    if (words.every(word => word.scrollHeight <= word.parentElement.clientHeight - 52 && word.scrollWidth <= word.clientWidth + 2)) return;
+  }
+  // Szélsőségesen hosszú szövegnél a teljes tartalomnak hagyjunk helyet.
+  scene.style.height = Math.max(maxHeight, ...words.map(w => w.scrollHeight + 64)) + 'px';
 }
 function flip() { if (current) { flipped = !flipped; renderCard(); } }
+window.addEventListener('resize', () => { if (current) requestAnimationFrame(fitCardWords); });
 function next(kind) {
   if (!current || !active) return;
   if (kind === 'learn') {
