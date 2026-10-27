@@ -26,8 +26,8 @@
     .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.7,.2,1)}
     .card-scene.is-flipped .card-inner{transform:rotateY(180deg)}
     .card-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:30px;text-align:center;border:1px solid #E6CDD4;border-radius:26px;box-shadow:0 16px 38px #5D536B1C;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    .card-front{background:#F1DFE2}
-    .card-back{background:#E5DFF3;border-color:#D5C9E7}
+    .card-front{background:var(--card-front,#F1DFE2);border-color:var(--card-front-border,#E6CDD4)}
+    .card-back{background:var(--card-back,#E5DFF3);border-color:var(--card-back-border,#D5C9E7)}
     .card-back{transform:rotateY(180deg)}
     .word{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;overflow-wrap:anywhere;color:#5D536B}
     .card-back .word{color:#5D536B}
@@ -81,6 +81,28 @@ let touchStart = null;
 let suppressClick = false;
 let pending = [];
 let roundRetry = [];
+// Minden Excel-munkalap saját, harmonikus pasztell kártyaszíneket kap.
+// A két szín egy munkalapon belül a kártya elejéhez és hátuljához tartozik.
+const SHEET_COLORS = [
+  ['#F1DFE2', '#E5DFF3'], // púderrózsa – levendula
+  ['#F9E4D6', '#F5EBD7'], // barack – vanília
+  ['#DFE9DE', '#DCEDE8'], // zsálya – menta
+  ['#DFEAF3', '#E9E1F5'], // púderkék – levendula
+  ['#F4E2EA', '#F5E8D8'], // rózsaszín – bézs
+  ['#E8E2F3', '#E1EAF0'], // orgona – felhőkék
+  ['#F3E8D9', '#E6EBDD'], // homok – pisztácia
+  ['#F0DDE5', '#E4E6F5'], // mályva – halványkék
+  ['#E2ECE8', '#F3E3DC'], // menta – barackrózsa
+  ['#F2E6D9', '#E9E2ED']  // krém – lila
+];
+function setSheetColors(index) {
+  const [front, back] = SHEET_COLORS[index % SHEET_COLORS.length];
+  const card = $('card');
+  card.style.setProperty('--card-front', front);
+  card.style.setProperty('--card-back', back);
+  card.style.setProperty('--card-front-border', front);
+  card.style.setProperty('--card-back-border', back);
+}
 let orderMode = localStorage.getItem('studyflow-order') === 'sequential' ? 'sequential' : 'random';
 $('order').checked = orderMode === 'random';
 function shuffle(items) {
@@ -163,6 +185,7 @@ function next(kind) {
   showCard();
 }
 function selectSheet(index) {
+  setSheetColors(index);
   active = sheets[index] || null; current = null; retryQueue = []; buildQueue();
   $('reset').disabled = !active;
   if (!active) { showMessage('Nem található tanulható munkalap.', true); return; }
