@@ -144,8 +144,8 @@ function showCard() {
 }
 function renderCard() {
   if (!current) return;
-  $('frontWord').textContent = current.answer;
-  $('backWord').textContent = current.question;
+  $('frontWord').textContent = current.question;
+  $('backWord').textContent = current.answer;
   $('card').classList.toggle('is-flipped', flipped);
   $('card').setAttribute('aria-pressed', String(flipped));
 }
