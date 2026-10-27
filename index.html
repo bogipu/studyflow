@@ -63,6 +63,11 @@
     <button id="reload" class="secondary" type="button">Frissítés</button>
     <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
   </div>
+  <div id="cloudPanel" style="margin:0 0 14px;padding:12px 14px;border:1px solid #EADFE9;border-radius:14px;background:#FFFDFE;font-size:.9rem">
+    <label for="syncCode"><strong>☁️ Online statisztika – saját kód</strong></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><input id="syncCode" type="text" autocomplete="off" spellcheck="false" placeholder="Írj be egy hosszú, egyedi kódot" style="flex:1;min-width:170px;padding:10px;border:1px solid #D8CEE6;border-radius:10px"><button id="saveSync" class="secondary" type="button">Kód mentése</button></div>
+    <div id="syncStatus" aria-live="polite" style="margin-top:7px;color:#746A80">A kódot a statisztikaoldal is használja. Másik eszközön ugyanazt add meg.</div>
+  </div>
   <div id="stats" class="stats" aria-live="polite"></div>
   <div id="message" class="message">Excel-adatok betöltése…</div>
   <div id="roundSummary" class="round-summary hidden" aria-live="polite">
@@ -96,6 +101,42 @@
 const EXCEL_FILE = 'studyflow.xlsx';
 const STORAGE_PREFIX = 'studyflow-v2:';
 const HISTORY_KEY = 'studyflow-daily-history-v1';
+const SYNC_KEY = 'studyflow-cloud-code-v1';
+const QUEUE_KEY = 'studyflow-cloud-pending-v1';
+function syncCode() { return (localStorage.getItem(SYNC_KEY) || '').trim(); }
+function updateSyncStatus(message) { $('syncStatus').textContent = message || (syncCode() ? '☁️ Online mentés bekapcsolva ezen az eszközön.' : 'Adj meg egy egyedi kódot az online mentéshez.'); }
+$('syncCode').value = syncCode();
+updateSyncStatus();
+$('saveSync').addEventListener('click', () => {
+  const code = $('syncCode').value.trim();
+  if (code.length < 16 || code.length > 128) { updateSyncStatus('Legalább 16 karakteres, egyedi kódot adj meg.'); return; }
+  if (syncCode() && syncCode() !== code && getPending().length) { updateSyncStatus('Előbb várd meg a korábbi mentések feltöltését, mielőtt kódot váltasz.'); return; }
+  localStorage.setItem(SYNC_KEY, code);
+  updateSyncStatus('☁️ Kód mentve. Az új válaszokat online is rögzítjük.');
+  flushPending();
+});
+function getPending() { try { const a = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } }
+let flushing = false;
+async function flushPending() {
+  if (flushing || !syncCode() || !navigator.onLine) return;
+  flushing = true;
+  try {
+    let queue = getPending();
+    while (queue.length) {
+      const event = queue[0];
+      const response = await fetch('/api/stats', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({userId:syncCode(), sheetName:event.sheetName, result:event.result})});
+      if (!response.ok) throw new Error('HTTP '+response.status);
+      queue.shift();
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    }
+    updateSyncStatus('☁️ Az eredmények online elmentve.');
+  } catch (err) { updateSyncStatus('⚠️ Az online mentés még várakozik. Ellenőrizd a kapcsolatot és a Cloudflare oldalt.'); console.warn(err); }
+  finally { flushing = false; }
+}
+window.addEventListener('online', flushPending);
+window.addEventListener('focus', flushPending);
+flushPending();
+
 const $ = id => document.getElementById(id);
 let sheets = [];
 let active = null;
@@ -271,6 +312,12 @@ function next(kind) {
     roundMissed.add(current.id);
   }
   recordPractice(kind);
+  if (syncCode()) {
+    const queue = getPending();
+    queue.push({sheetName:active.name, result:kind === 'learn' ? 'known' : 'missed'});
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    flushPending();
+  }
   current = null;
   showCard();
 }
