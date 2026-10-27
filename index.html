@@ -64,6 +64,7 @@
     <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
   </div>
   <div id="stats" class="stats" aria-live="polite"></div>
+  <div id="syncStatus" class="stats" aria-live="polite" style="font-size:.86rem;margin-top:-10px">☁️ Haladás betöltése…</div>
   <div id="message" class="message">Excel-adatok betöltése…</div>
   <div id="roundSummary" class="round-summary hidden" aria-live="polite">
     <h2>Végigértél a listán! 🎉</h2>
@@ -109,6 +110,9 @@ let roundRetry = [];
 let roundCards = [];
 let roundKnown = new Set();
 let roundMissed = new Set();
+let learnedOnline = new Set();
+let progressBusy = false;
+let sheetRequest = 0;
 // Minden Excel-munkalap saját, harmonikus pasztell kártyaszíneket kap.
 // A két szín egy munkalapon belül a kártya elejéhez és hátuljához tartozik.
 const SHEET_COLORS = [
@@ -152,8 +156,7 @@ function beginRound(cards) {
 }
 function buildQueue() {
   if (!active) return;
-  const learned = learnedSet(active);
-  beginRound(active.cards.filter(c => !learned.has(c.id)));
+  beginRound(active.cards.filter(c => !learnedOnline.has(c.id)));
 }
 function advanceCard() {
   current = pending.shift() || null;
@@ -299,46 +302,137 @@ window.addEventListener('online', syncPending);
 window.addEventListener('focus', syncPending);
 void syncPending();
 
-function next(kind) {
-  if (!current || !active) return;
-  if (kind === 'learn') {
-    const set = learnedSet(active); set.add(current.id);
-    if (!saveLearned(active, set)) return;
-    roundKnown.add(current.id);
-  } else {
-    roundMissed.add(current.id);
+// Az online tanulási állapot egyetlen közös profilban tárolódik.
+// Nem privát: a weboldal látogatói ugyanazt a haladást használják.
+const PROGRESS_USER = ONLINE_USER;
+function progressSnapshot() {
+  return {
+    learned: [...learnedOnline],
+    pending: pending.map(c => c.id),
+    current: current ? current.id : null,
+    roundCards: roundCards.map(c => c.id),
+    roundKnown: [...roundKnown],
+    roundMissed: [...roundMissed],
+    orderMode
+  };
+}
+async function progressRequest(method, sheetName, state) {
+  const url = '/api/progress?user=' + encodeURIComponent(PROGRESS_USER) + '&sheet=' + encodeURIComponent(sheetName);
+  const response = await fetch(url, method === 'GET' ? {cache:'no-store'} : {
+    method, headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:PROGRESS_USER, sheetName, state})
+  });
+  if (!response.ok) throw new Error('HTTP ' + response.status);
+  return response.json();
+}
+function cardById(id) { return active.cards.find(c => c.id === id) || null; }
+function restoreProgress(state) {
+  learnedOnline = new Set((state.learned || []).filter(id => cardById(id)));
+  const toCards = ids => (ids || []).map(cardById).filter(Boolean);
+  roundCards = toCards(state.roundCards);
+  roundKnown = new Set(state.roundKnown || []);
+  roundMissed = new Set(state.roundMissed || []);
+  pending = toCards(state.pending).filter(c => !learnedOnline.has(c.id));
+  current = state.current && !learnedOnline.has(state.current) ? cardById(state.current) : null;
+  if (state.orderMode === 'random' || state.orderMode === 'sequential') {
+    orderMode = state.orderMode;
+    $('order').checked = orderMode === 'random';
   }
-  recordPractice(kind);
-  saveOnlinePractice(kind);
+  if (!roundCards.length) buildQueue();
+  else showCard();
+}
+async function selectSheet(index) {
+  const requestId = ++sheetRequest;
+  setSheetColors(index);
+  active = sheets[index] || null;
+  current = null; pending = []; roundCards = [];
+  roundKnown = new Set(); roundMissed = new Set(); learnedOnline = new Set();
+  $('reset').disabled = true;
+  $('again').disabled = true; $('learned').disabled = true;
+  if (!active) { showMessage('Nem található munkalap.', true); return; }
+  if (!active.cards.length) { showMessage('Ez a kategória még üres.'); return; }
+  showMessage('☁️ Tanulási haladás betöltése…');
+  $('syncStatus').textContent = '☁️ Online haladás lekérése…';
+  try {
+    const sheet = active;
+    const data = await progressRequest('GET', sheet.name);
+    if (requestId !== sheetRequest) return;
+    if (data.state) {
+      restoreProgress(data.state);
+    } else {
+      // Első alkalommal a régi eszközön megtanult kártyák is átkerülhetnek.
+      learnedOnline = learnedSet(sheet);
+      buildQueue();
+      await progressRequest('PUT', sheet.name, progressSnapshot());
+    }
+    if (requestId !== sheetRequest) return;
+    $('syncStatus').textContent = '☁️ Haladás szinkronizálva';
+    $('reset').disabled = false;
+    $('again').disabled = false; $('learned').disabled = false;
+  } catch (error) {
+    if (requestId !== sheetRequest) return;
+    $('syncStatus').textContent = '⚠️ Nem érhető el a haladás mentése';
+    showMessage('Nem sikerült betölteni az online haladást. Ellenőrizd a kapcsolatot, majd kattints a Frissítés gombra. (' + error.message + ')', true);
+  }
+}
+async function saveProgress() {
+  if (!active) return;
+  await progressRequest('PUT', active.name, progressSnapshot());
+}
+async function next(kind) {
+  if (!current || !active || progressBusy) return;
+  progressBusy = true;
+  $('again').disabled = true; $('learned').disabled = true;
+  const oldCurrent = current;
+  const oldPending = [...pending];
+  const oldKnown = new Set(roundKnown);
+  const oldMissed = new Set(roundMissed);
+  const oldLearned = new Set(learnedOnline);
+  if (kind === 'learn') { learnedOnline.add(current.id); roundKnown.add(current.id); }
+  else roundMissed.add(current.id);
   current = null;
-  showCard();
+  try {
+    await saveProgress();
+    recordPractice(kind);
+    saveOnlinePractice(kind);
+    $('syncStatus').textContent = '☁️ Haladás elmentve';
+    showCard();
+  } catch (error) {
+    current = oldCurrent; pending = oldPending;
+    roundKnown = oldKnown; roundMissed = oldMissed; learnedOnline = oldLearned;
+    $('syncStatus').textContent = '⚠️ Nem sikerült menteni – próbáld újra';
+    alert('Nem sikerült online menteni a haladást. Nem léptünk tovább, próbáld újra.');
+  } finally {
+    progressBusy = false;
+    $('again').disabled = false; $('learned').disabled = false;
+  }
 }
-function restartAll() {
-  if (!active) return;
-  try { localStorage.removeItem(keyFor(active)); }
-  catch { showMessage('Nem sikerült törölni a mentett haladást.', true); return; }
+async function restartAll() {
+  if (!active || progressBusy) return;
+  if (!confirm('Biztosan elölről kezded ezt a kategóriát MINDEN eszközön?')) return;
+  progressBusy = true;
+  const previous = progressSnapshot();
+  learnedOnline = new Set();
   beginRound(active.cards);
+  try {
+    await saveProgress();
+    localStorage.removeItem(keyFor(active));
+    $('syncStatus').textContent = '☁️ Újrakezdés minden eszközön elmentve';
+  } catch (error) {
+    restoreProgress(previous);
+    alert('Az újrakezdés nem mentődött el. Próbáld újra.');
+  } finally { progressBusy = false; }
 }
-$('retryMissed').addEventListener('click', () => {
-  if (!active) return;
-  const missed = active.cards.filter(c => roundMissed.has(c.id));
-  if (missed.length) beginRound(missed);
+$('retryMissed').addEventListener('click', async () => {
+  if (!active || progressBusy) return;
+  const missed = active.cards.filter(c => roundMissed.has(c.id) && !learnedOnline.has(c.id));
+  if (!missed.length) return;
+  const previous = progressSnapshot();
+  beginRound(missed);
+  try { await saveProgress(); }
+  catch { restoreProgress(previous); alert('Nem sikerült menteni az ismétlést.'); }
 });
 $('restartAll').addEventListener('click', restartAll);
-function selectSheet(index) {
-  setSheetColors(index);
-  active = sheets[index] || null; current = null; retryQueue = [];
-  roundCards = []; roundKnown = new Set(); roundMissed = new Set();
-  $('roundSummary').classList.add('hidden');
-  $('reset').disabled = !active;
-  if (!active) { showMessage('Nem található munkalap.', true); return; }
-  if (!active.cards.length) {
-    $('stats').textContent = `${active.name} · 0 tanulókártya`;
-    showMessage('Ez a munkalap még nem tartalmaz tanulható szópárokat. Az első sor legyen fejléc, az A és B oszlopban pedig legyenek szavak.');
-    return;
-  }
-  buildQueue();
-}
 // Beépített kártyaadatok: külső Excel-olvasó nélkül is működik.
 // Ha módosítod a studyflow.xlsx fájlt, a beépített adatokat is frissíteni kell.
 const EMBEDDED_WORKBOOK = {"10.26.":[["megvádolva lenni vmivel","to be accused of"],["felület","surface - "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["kell, kellene","ought to - "],["kifutó","enclosure "],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"words":[["spejz","pantry"],["összegyűlik, összeadódik","to pile up"],["vízesés","waterfall"],["bizonyíték","evidence"],["tárgyalás","trial"],["feltételezni","to assume"],["bűnös","guilty"],["meggyőző","convincing"],["védelmi, védő, védelem","defence"],["ijedt, fél","frightened"],["megvádolva lenni vmivel","to be accused of"],["igazság","justice "],["a fiatalok - mindenkire vonatkoztatva, gyűjtőnév","the young"],["többé nem","no longer"],["elhitelteleníteni, lejáratni","to discredit"],["gondolkodni valamin","to think about"],["kitalálni, kigondolni, eszébe jut","to think of"],["kétnyelvű","bilingual "],["simogatni","to pet "],["simogatni ","to caress "],["simogatni","to stroke "],["gyanú","suspicion "],["felnevelés, neveltetés","upbringing "],["tudatosság","awareness "],["tudatában lenni vminek","to be aware of "],["emelkedni, növelni","to increase "],["tégla","brick "],["félrevezetni","to mislead "],["kivágni, eltávolítani","to edit out "],["véghezvinni","to carry out "],["ugyanúgy, mint","as well as "],["venni, vásárolni vmit","to purchase "],["terepgyakorlat","field practice/fieldwork "],["elővigyázatos","cautious "],["felület","surface - "],["csapdába ejteni","to trap - "],["nagyság, hatalmasság","vastness -  "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],[" szükséges, alapvető","essential -"],["gond, probléma","matter - "],["elméleti szinten, elméletileg","theoretically - "],["két hét","fortnight - "],["szánalmas látvány","pathetic sight - "],["szorítani","to clamp - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["hétköznapiság","mundanity - "],["furcsaság, különös szokás","quirk - "],["ellenállni","to resist - "],["kikapcsolni","to switch off - "],["bekapcsolni","to switch on - "],["kell, kellene","ought to - "],["harisnya","tights - "],[" nem gondolni rá, eltávolodni tőle","to take your mind off of (something) -"],["pata","hoof"],["paták","hooves "],[" veszélyforrás, rossz viselkedésű valaki,  veszedelem","menace -"],["kifutó","enclosure "],["most az egyszer","for once "],["",""],["",""],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"zöld fogalmak":[["ZÖLDINFRASTRUKTÚRA","„Zöldinfrastruktúrának nevezzük azokat a természetes és félig természetes területeket, valamint egyéb növényzettel fedett és ökológiai funkciót betöltő területek stratégiailag megtervezett hálózatát, amelyet úgy terveztek és irányítanak, hogy széleskörű ökoszisztéma-szolgáltatások nyújtására legyenek képesek”."]]};
@@ -383,18 +477,11 @@ async function loadExcel() {
 $('order').addEventListener('change', e => {
   orderMode = e.target.checked ? 'random' : 'sequential';
   try { localStorage.setItem('studyflow-order', orderMode); } catch {}
-  buildQueue();
+  if (active) void saveProgress();
 });
 $('category').addEventListener('change', e => selectSheet(Number(e.target.value)));
 $('reload').addEventListener('click', loadExcel);
-$('reset').addEventListener('click', () => {
-  if (!active) return;
-  if (confirm(`Biztosan törlöd a(z) „${active.name}” munkalap megtanult jelöléseit ezen az eszközön?`)) {
-    try { localStorage.removeItem(keyFor(active)); }
-    catch { showMessage('Nem sikerült törölni a mentett haladást.', true); return; }
-    current = null; retryQueue = []; buildQueue();
-  }
-});
+$('reset').addEventListener('click', restartAll);
 $('card').addEventListener('click', () => { if (suppressClick) { suppressClick = false; return; } flip(); });
 $('card').addEventListener('keydown', e => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
