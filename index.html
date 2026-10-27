@@ -261,6 +261,44 @@ function recordPractice(kind) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   } catch (err) { console.warn('A statisztika mentése nem sikerült:', err); }
 }
+
+// Egyetlen közös StudyFlow-statisztika, automatikusan mindkét eszközön.
+// Figyelem: nincs hozzáférés-védelem; aki ismeri az API-t, elérheti a statisztikát.
+const ONLINE_USER = 'studyflow-kozos-statisztika-v1';
+const PENDING_KEY = 'studyflow-online-pending-v1';
+let syncing = false;
+async function syncPending() {
+  if (syncing) return;
+  syncing = true;
+  try {
+    let queue = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+    if (!Array.isArray(queue)) queue = [];
+    while (queue.length) {
+      const response = await fetch('/api/stats', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(queue[0])
+      });
+      if (!response.ok) throw new Error('API: ' + response.status);
+      const latest = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+      queue = Array.isArray(latest) ? latest.filter(item => item.eventId !== queue[0].eventId) : [];
+      localStorage.setItem(PENDING_KEY, JSON.stringify(queue));
+    }
+  } catch (e) { console.warn('Online mentés később újrapróbálva:', e); }
+  finally { syncing = false; }
+}
+function saveOnlinePractice(kind) {
+  try {
+    const queue = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+    const pending = Array.isArray(queue) ? queue : [];
+    pending.push({eventId: crypto.randomUUID(), userId: ONLINE_USER, sheetName: active.name, result: kind === 'learn' ? 'known' : 'missed'});
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+    void syncPending();
+  } catch (e) { console.warn('Nem sikerült sorba állítani az online mentést:', e); }
+}
+window.addEventListener('online', syncPending);
+window.addEventListener('focus', syncPending);
+void syncPending();
+
 function next(kind) {
   if (!current || !active) return;
   if (kind === 'learn') {
@@ -271,6 +309,7 @@ function next(kind) {
     roundMissed.add(current.id);
   }
   recordPractice(kind);
+  saveOnlinePractice(kind);
   current = null;
   showCard();
 }
