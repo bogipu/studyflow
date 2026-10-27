@@ -167,7 +167,7 @@ function showCard() {
 }
 function renderCard() {
   if (!current) return;
-  $('frontWord').textContent = current.question;
+  $('frontWord').textContent = current.question; // Mindig az Excel A (első) oszlopa
   $('backWord').textContent = current.answer;
   $('card').classList.toggle('is-flipped', flipped);
   $('card').setAttribute('aria-pressed', String(flipped));
@@ -188,7 +188,12 @@ function selectSheet(index) {
   setSheetColors(index);
   active = sheets[index] || null; current = null; retryQueue = []; buildQueue();
   $('reset').disabled = !active;
-  if (!active) { showMessage('Nem található tanulható munkalap.', true); return; }
+  if (!active) { showMessage('Nem található munkalap.', true); return; }
+  if (!active.cards.length) {
+    $('stats').textContent = `${active.name} · 0 tanulókártya`;
+    showMessage('Ez a munkalap még nem tartalmaz tanulható szópárokat. Az első sor legyen fejléc, az A és B oszlopban pedig legyenek szavak.');
+    return;
+  }
   showCard();
 }
 async function loadExcel() {
@@ -217,8 +222,8 @@ async function loadExcel() {
         cards.push({id:base + ':' + count, question, answer});
       }
       return {name, cards};
-    }).filter(sheet => sheet.cards.length > 0);
-    if (!parsed.length) throw new Error('Az Excelben nem találtam tanulható adatokat. Az első sor legyen fejléc, az A oszlop angol, a B magyar szöveg.');
+    }); // Minden Excel-munkalap látszik a választóban, az üresek is.
+    if (!parsed.length) throw new Error('Az Excel-fájlban nem található munkalap.');
     const previousName = active?.name;
     sheets = parsed;
     $('category').replaceChildren();
