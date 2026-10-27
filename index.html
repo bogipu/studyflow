@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10182b">
+  <title>StudyFlow – Tanulókártyák</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#eef2ff;background:#10182b;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh}main{max-width:720px;margin:auto;padding:24px 18px 50px}
+    h1{margin:0;font-size:2rem;letter-spacing:-.04em}.sub{color:#aab6d0;margin:7px 0 24px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    select,button{font:inherit;border-radius:12px;padding:12px 14px}select{background:#202e4b;color:#fff;border:1px solid #52617c;flex:1;min-width:180px}
+    button{border:0;background:#365edb;color:white;cursor:pointer;font-weight:650}button:hover{filter:brightness(1.12)}button:disabled{opacity:.45;cursor:not-allowed}
+    .secondary{background:#263650}.stats{color:#bdc9e1;margin:10px 0 18px;min-height:24px}
+    .flashcard{width:100%;min-height:300px;background:linear-gradient(145deg,#233d72,#1b2b4e);border:1px solid #526b9d;border-radius:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px;padding:30px;text-align:center;touch-action:pan-y;user-select:none;box-shadow:0 15px 35px #0003;cursor:pointer}
+    .flashcard:focus-visible{outline:3px solid #93b4ff;outline-offset:4px}.flashcard .hint{font-size:.85rem;color:#b7c8e8}.flashcard .word{font-size:clamp(1.7rem,5vw,2.7rem);font-weight:750;overflow-wrap:anywhere}
+    .actions{display:flex;gap:12px;margin-top:18px}.actions button{flex:1;min-height:54px}.retry{background:#8d4b22}.learn{background:#17805e}
+    .message{padding:28px 20px;border-radius:18px;background:#202e4b;line-height:1.6}.message.error{border:1px solid #dd7883}
+    .footer{margin-top:24px;color:#91a1bd;font-size:.85rem;line-height:1.5}
+    .hidden{display:none!important}@media(max-width:460px){main{padding:20px 14px}.flashcard{min-height:270px}.actions{gap:8px}.actions button{padding:12px 8px;font-size:.92rem}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>StudyFlow</h1>
+  <p class="sub">Angol–magyar tanulókártyák · Excelből</p>
+  <div class="toolbar">
+    <select id="category" aria-label="Munkalap választása" disabled><option>Betöltés…</option></select>
+    <select id="order" aria-label="Tanulási sorrend"><option value="random">🔀 Véletlenszerű</option><option value="sequential">☰ Excel-sorrend</option></select>
+    <button id="reload" class="secondary" type="button">Frissítés</button>
+    <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
+  </div>
+  <div id="stats" class="stats" aria-live="polite"></div>
+  <div id="message" class="message">Excel-adatok betöltése…</div>
+  <div id="study" class="hidden">
+    <div id="card" class="flashcard" role="button" tabindex="0" aria-label="Kártya megfordítása">
+      <span id="side" class="hint">ANGOL · Kattints a fordításhoz</span>
+      <span id="word" class="word"></span>
+      <span class="hint">Kattints vagy koppints a kártyára</span>
+    </div>
+    <div class="actions">
+      <button id="again" class="retry" type="button">← Újra kérem</button>
+      <button id="learned" class="learn" type="button">Megtanultam →</button>
+    </div>
+  </div>
+  <p class="footer">Telefonon: húzd balra a kártyát az ismétléshez, jobbra a megtanulthoz. A haladást ez a böngésző menti. Az Excel módosítása után a GitHubon cseréld le a fájlt, majd nyomd meg a Frissítés gombot.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+'use strict';
+// Az Excel fájl neve a GitHub-tárhely gyökérkönyvtárában.
+const EXCEL_FILE = 'studyflow.xlsx';
+const STORAGE_PREFIX = 'studyflow-v2:';
+const $ = id => document.getElementById(id);
+let sheets = [];
+let active = null;
+let current = null;
+let flipped = false;
+let retryQueue = [];
+let touchStart = null;
+let pending = [];
+let roundRetry = [];
+let orderMode = localStorage.getItem('studyflow-order') === 'sequential' ? 'sequential' : 'random';
+$('order').value = orderMode;
+function shuffle(items) {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function buildQueue() {
+  if (!active) return;
+  const learned = learnedSet(active);
+  const cards = active.cards.filter(c => !learned.has(c.id));
+  pending = orderMode === 'random' ? shuffle(cards) : cards;
+  roundRetry = [];
+}
+function advanceCard() {
+  if (!active) return;
+  if (!pending.length && roundRetry.length) {
+    const retries = active.cards.filter(c => roundRetry.includes(c.id) && !learnedSet(active).has(c.id));
+    pending = orderMode === 'random' ? shuffle(retries) : retries;
+    roundRetry = [];
+  }
+  current = pending.shift() || null;
+}
+
+function hashText(text) {
+  // Stabil azonosító a munkalapnév + szó + jelentés alapján.
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36);
+}
+function keyFor(sheet) { return STORAGE_PREFIX + encodeURIComponent(sheet.name); }
+function learnedSet(sheet) {
+  try { const a = JSON.parse(localStorage.getItem(keyFor(sheet)) || '[]'); return new Set(Array.isArray(a) ? a : []); }
+  catch { return new Set(); }
+}
+function saveLearned(sheet, set) {
+  try { localStorage.setItem(keyFor(sheet), JSON.stringify([...set])); return true; }
+  catch { showMessage('A böngésző nem engedte menteni a haladást. Ellenőrizd a tárhelybeállításokat.', true); return false; }
+}
+function showMessage(text, error = false) {
+  $('study').classList.add('hidden'); $('message').classList.remove('hidden');
+  $('message').classList.toggle('error', error); $('message').textContent = text;
+}
+function showCard() {
+  if (!active) return;
+  const learned = learnedSet(active);
+  const remaining = active.cards.filter(c => !learned.has(c.id));
+  $('stats').textContent = `${active.name} · ${learned.size} megtanult · ${remaining.length} hátralévő / ${active.cards.length} összesen`;
+  if (!remaining.length) {
+    current = null;
+    showMessage('🎉 Ezt a munkalapot megtanultad! Válassz másik kategóriát, vagy kattints az Újrakezdés gombra.');
+    return;
+  }
+  if (!current) advanceCard();
+  if (!current) { showMessage('Nincs több kártya.'); return; }
+  flipped = false;
+  renderCard();
+  $('message').classList.add('hidden'); $('study').classList.remove('hidden');
+}
+function renderCard() {
+  if (!current) return;
+  $('side').textContent = flipped ? 'MAGYAR · Kattints az angolhoz' : 'ANGOL · Kattints a fordításhoz';
+  $('word').textContent = flipped ? current.answer : current.question;
+}
+function flip() { if (current) { flipped = !flipped; renderCard(); } }
+function next(kind) {
+  if (!current || !active) return;
+  if (kind === 'learn') {
+    const set = learnedSet(active); set.add(current.id);
+    if (!saveLearned(active, set)) return;
+  } else if (!roundRetry.includes(current.id)) {
+    roundRetry.push(current.id);
+  }
+  current = null;
+  showCard();
+}
+function selectSheet(index) {
+  active = sheets[index] || null; current = null; retryQueue = []; buildQueue();
+  $('reset').disabled = !active;
+  if (!active) { showMessage('Nem található tanulható munkalap.', true); return; }
+  showCard();
+}
+async function loadExcel() {
+  $('reload').disabled = true;
+  $('category').disabled = true;
+  showMessage('Excel-adatok betöltése…');
+  $('stats').textContent = '';
+  try {
+    if (typeof XLSX === 'undefined') throw new Error('Az Excel-olvasó könyvtár nem töltődött be. Ellenőrizd az internetkapcsolatot.');
+    const url = EXCEL_FILE + '?v=' + Date.now();
+    const response = await fetch(url, {cache:'no-store'});
+    if (!response.ok) throw new Error(`Nem sikerült megnyitni a(z) ${EXCEL_FILE} fájlt (HTTP ${response.status}). Ellenőrizd, hogy az index.html mellett van-e, pontosan ezzel a névvel.`);
+    const bytes = await response.arrayBuffer();
+    const workbook = XLSX.read(bytes, {type:'array'});
+    const parsed = workbook.SheetNames.map(name => {
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], {header:1, defval:'', blankrows:false});
+      const seen = new Map();
+      const cards = [];
+      for (const row of rows.slice(1)) {
+        const question = String(row[0] ?? '').trim();
+        const answer = String(row[1] ?? '').trim();
+        if (!question || !answer) continue;
+        const base = hashText(JSON.stringify([name, question, answer]));
+        const count = (seen.get(base) || 0) + 1;
+        seen.set(base, count);
+        cards.push({id:base + ':' + count, question, answer});
+      }
+      return {name, cards};
+    }).filter(sheet => sheet.cards.length > 0);
+    if (!parsed.length) throw new Error('Az Excelben nem találtam tanulható adatokat. Az első sor legyen fejléc, az A oszlop angol, a B magyar szöveg.');
+    const previousName = active?.name;
+    sheets = parsed;
+    $('category').replaceChildren();
+    sheets.forEach((sheet, i) => {
+      const opt = document.createElement('option'); opt.value = String(i);
+      opt.textContent = `${sheet.name} (${sheet.cards.length})`;
+      $('category').appendChild(opt);
+    });
+    const selectedIndex = Math.max(0, sheets.findIndex(s => s.name === previousName));
+    $('category').value = String(selectedIndex);
+    $('category').disabled = false;
+    selectSheet(selectedIndex);
+  } catch (err) {
+    active = null; current = null; $('reset').disabled = true;
+    showMessage('Hiba: ' + (err instanceof Error ? err.message : String(err)), true);
+  } finally { $('reload').disabled = false; }
+}
+$('order').addEventListener('change', e => {
+  orderMode = e.target.value;
+  try { localStorage.setItem('studyflow-order', orderMode); } catch {}
+  current = null;
+  buildQueue();
+  showCard();
+});
+$('category').addEventListener('change', e => selectSheet(Number(e.target.value)));
+$('reload').addEventListener('click', loadExcel);
+$('reset').addEventListener('click', () => {
+  if (!active) return;
+  if (confirm(`Biztosan törlöd a(z) „${active.name}” munkalap megtanult jelöléseit ezen az eszközön?`)) {
+    try { localStorage.removeItem(keyFor(active)); }
+    catch { showMessage('Nem sikerült törölni a mentett haladást.', true); return; }
+    current = null; retryQueue = []; buildQueue(); showCard();
+  }
+});
+$('card').addEventListener('click', flip);
+$('card').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); next('again'); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); next('learn'); }
+});
+$('again').addEventListener('click', () => next('again'));
+$('learned').addEventListener('click', () => next('learn'));
+$('card').addEventListener('touchstart', e => {
+  if (e.touches.length === 1) touchStart = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+}, {passive:true});
+$('card').addEventListener('touchend', e => {
+  if (!touchStart || !e.changedTouches.length) return;
+  const dx = e.changedTouches[0].clientX - touchStart.x;
+  const dy = e.changedTouches[0].clientY - touchStart.y;
+  touchStart = null;
+  if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+    e.preventDefault();
+    next(dx > 0 ? 'learn' : 'again');
+  }
+}, {passive:false});
+loadExcel();
+</script>
+</body>
+</html>
