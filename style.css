@@ -77,3 +77,15 @@
 .tasks-page .notice,.tasks-page .status{background:#fffbf0;color:#82745b;border:1px solid #f2ead6}
 .tasks-page button:focus-visible,.tasks-page .back:focus-visible{outline:3px solid #9c8998;outline-offset:2px}
 @media(max-width:500px){.tasks-page .tabs{gap:5px}.tasks-page .tabs button{padding:9px 11px}}
+
+/* Feladatok: ugyanaz a hat visszafogott kategória, mint a naptárban */
+.tasks-page .task-category-filters{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 17px}
+.tasks-page .task-category-filters label{display:inline-flex;align-items:center;gap:6px;border:1px solid #ebe7e7;border-radius:999px;padding:8px 11px;background:#fff;color:#69616a;font-size:.85rem;cursor:pointer}
+.tasks-page .task-category-filters input{accent-color:#b789a5;cursor:pointer}
+.tasks-page .task-category-filters label:has(input[value="task"]){background:#fff9fc}
+.tasks-page .task-category-filters label:has(input[value="study"]){background:#f7fcf9}
+.tasks-page .task-category-filters label:has(input[value="event"]){background:#f9f9ff}
+.tasks-page .task-category-filters label:has(input[value="exam"]){background:#fff8fa}
+.tasks-page .task-category-filters label:has(input[value="deadline"]){background:#fffcf4}
+.tasks-page .task-category-filters label:has(input[value="bblooms"]){background:#fff8f3}
+.tasks-page .task-category-filters label:has(input:not(:checked)){opacity:.48;background:#fff}
