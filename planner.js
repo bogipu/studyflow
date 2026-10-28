@@ -129,7 +129,7 @@ function projectEditor(id){
 }
 function renderMilestoneList(id){
  const items=projectMilestones(id);
- $('milestoneList').innerHTML=items.length?items.map(m=>`<div class="milestone-item"><label><input type="checkbox" data-toggle="${esc(m.id)}" ${m.done?'checked':''}> ${esc(m.title)} · ${esc(m.date)}</label><div><button data-project-edit-milestone="${esc(m.id)}">✎</button><button data-project-delete-milestone="${esc(m.id)}">✕</button></div></div>`).join(''):'<p class="muted small">Adj hozzá tetszőleges számú mérföldkövet.</p>';
+ $('milestoneList').innerHTML=items.length?items.map(m=>`<div class="milestone-item"><label><input type="checkbox" data-toggle="${esc(m.id)}" ${m.done?'checked':''}> ${esc(m.title)} · ${esc(m.date)}</label><div><button data-project-edit-milestone="${esc(m.id)}">✎</button><button data-project-delete-milestone="${esc(m.id)}">✕</button></div></div>`).join(''):'<p class="muted small">Adj hozzá 2–10 mérföldkövet.</p>';
 }
 function resetProjectEditor(){
  $('projectForm').reset();$('projectForm').elements.projectId.value='';$('projectFormTitle').textContent='Új projekt ♡';$('projectDelete').hidden=true;$('milestonePanel').hidden=true;
@@ -185,6 +185,7 @@ if($('milestoneForm'))$('milestoneForm').onsubmit=async ev=>{
  ev.preventDefault();const f=ev.target,id=f.elements.milestoneId.value,pid=f.elements.projectId.value;
  const project=entries.find(e=>e.id===pid&&e.isProjectMeta);if(!project){alert('Először mentsd el a projektet.');return}
  let m=entries.find(e=>e.id===id&&e.projectId===pid);
+ if(!m&&projectMilestones(pid).length>=10){alert('Egy projekthez legfeljebb 10 mérföldkövet adhatsz hozzá.');return}
  if(!m){m={id:uid(),projectId:pid,isTask:true,done:false};entries.push(m)}
  m.title=f.elements.title.value.trim();m.date=f.elements.date.value;m.type=project.projectCategory||'task';m.time='';
  f.reset();f.elements.projectId.value=pid;await save();renderMilestoneList(pid);
