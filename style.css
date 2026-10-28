@@ -153,3 +153,33 @@
 .health-swatch{display:inline-block;width:15px;height:15px;border-radius:5px;background:#edb8c7}
 .health-privacy,.health-explain{color:#8d7f89;font-size:.78rem;line-height:1.6;margin:14px 3px}
 @media(max-width:420px){.health-day{height:40px;border-radius:9px}.health-stats{gap:8px}.health-stat{padding:12px}.health-note{padding:14px}.health-bear{font-size:35px}}
+
+/* Letisztult StudyFlow főoldal – csak a főoldalra érvényes */
+.home-page{background:#fcfafb}
+.home-layout{max-width:850px;padding-top:38px}
+.home-intro{padding:10px 4px 31px}
+.home-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.home-heading h1{margin:0;color:#7f536b;font-size:clamp(1.85rem,5vw,2.45rem);letter-spacing:-.035em}
+.home-heading>span{font-size:1.75rem}
+.home-intro p{margin:11px 0 0;color:#907a89;line-height:1.65;font-size:.96rem}
+.home-navigation{display:block}
+.home-today{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f9e9f0;border:1px solid #f1dbe6;border-radius:23px;min-height:100px;padding:24px 26px;color:#7e4b68;transition:transform .15s,box-shadow .15s}
+.home-today-label{font-size:clamp(1.2rem,3vw,1.5rem);font-weight:750}
+.home-arrow{font-size:1.5rem;line-height:1;color:#aa7d94}
+.home-section-heading{margin:37px 3px 17px;font-size:1.16rem;color:#80566f}
+.home-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.home-menu-card{min-width:0;min-height:126px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:13px;padding:22px;border-radius:20px;border:1px solid rgba(103,75,94,.06);transition:transform .15s,box-shadow .15s}
+.home-menu-card strong{font-size:1.08rem;line-height:1.3;overflow-wrap:anywhere}
+.home-card-icon{font-size:1.85rem;line-height:1}
+.home-tasks{background:#f0eafb;color:#655b90}
+.home-calendar{background:#eaf0fc;color:#526d9b}
+.home-flashcards{background:#e9f5ed;color:#507d60}
+.home-stats{background:#fff1df;color:#946e4d}
+.home-health{background:#faeaf0;color:#905e77}
+.home-today:hover,.home-menu-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #74526712}
+.home-today:focus-visible,.home-menu-card:focus-visible{outline:3px solid #9a6f96;outline-offset:3px}
+.home-events{margin-top:39px;padding:23px 24px}
+.home-events h2{margin-bottom:10px}
+.home-events #today{margin-top:0}
+@media(max-width:500px){.home-layout{padding-top:25px}.home-intro{padding-bottom:25px}.home-today{min-height:86px;padding:20px}.home-section-heading{margin-top:30px}.home-card-grid{gap:10px}.home-menu-card{min-height:112px;padding:17px;gap:11px}.home-menu-card strong{font-size:.98rem}.home-events{margin-top:30px;padding:18px}}
+@media(prefers-reduced-motion:reduce){.home-today,.home-menu-card{transition:none}}

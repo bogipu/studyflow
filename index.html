@@ -1,1 +1,38 @@
-<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#fbe8f1"><title>StudyFlow ♡</title><link rel="stylesheet" href="style.css"><link rel="icon" type="image/svg+xml" href="icons/home.svg"></head><body><main><header class="hero"><div class="eyebrow">YOUR COZY STUDY SPACE 🎀</div><h1>StudyFlow ♡</h1><p>A te kis tanulós kuckód 🌷</p></header><section class="cards"><a class="navcard pink" href="feladatok.html"><div class="emoji">☑️</div><strong>My Planner</strong><span>Feladatok ♡</span></a><a class="navcard lavender" href="mai-napom.html"><div class="emoji">🌷</div><strong>Mai napom ♡</strong><span>Feladatok és projektek</span></a><a class="navcard lavender" href="naptar.html"><div class="emoji">📅</div><strong>My Planner</strong><span>Naptár ♡</span></a><a class="navcard green wide" href="tanulokartyak.html"><div class="emoji">📚</div><div><strong>Tanulókártyák</strong><div class="small">Tanulás és gyakorlás ♡</div></div></a><a class="navcard pink" href="egeszseg.html"><div class="emoji">🧸</div><strong>Egészség ♡</strong><span>Menstruációs napló</span></a></section><section class="panel"><h2>Mai események ♡</h2><p id="today" class="muted"></p><div id="events"></div></section></main><script src="planner.js"></script></body></html>
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#faf7f9">
+  <title>StudyFlow ♡</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="icons/home.svg">
+</head>
+<body class="home-page">
+<main class="home-layout">
+  <header class="home-intro">
+    <div class="home-heading"><h1>StudyFlow ♡</h1><span aria-hidden="true">🌷</span></div>
+    <p>Egy kis rend a teendők között, egy kis nyugalom a napodban. ♡</p>
+  </header>
+
+  <nav aria-label="StudyFlow oldalak" class="home-navigation">
+    <a class="home-today" href="mai-napom.html"><span class="home-today-label">🌸 Mai napom ♡</span><span class="home-arrow" aria-hidden="true">↗</span></a>
+    <h2 class="home-section-heading">Az oldalaim ♡</h2>
+    <div class="home-card-grid">
+      <a class="home-menu-card home-tasks" href="feladatok.html"><span class="home-card-icon" aria-hidden="true">☑️</span><strong>Feladataim</strong></a>
+      <a class="home-menu-card home-calendar" href="naptar.html"><span class="home-card-icon" aria-hidden="true">📅</span><strong>Naptár</strong></a>
+      <a class="home-menu-card home-flashcards" href="tanulokartyak.html"><span class="home-card-icon" aria-hidden="true">📚</span><strong>Tanulókártyák</strong></a>
+      <a class="home-menu-card home-stats" href="statisztika.html"><span class="home-card-icon" aria-hidden="true">📊</span><strong>Statisztika</strong></a>
+      <a class="home-menu-card home-health" href="egeszseg.html"><span class="home-card-icon" aria-hidden="true">🧸</span><strong>Egészség ♡</strong></a>
+    </div>
+  </nav>
+
+  <section class="panel home-events" aria-labelledby="home-events-title">
+    <h2 id="home-events-title">Mai események ♡</h2>
+    <p id="today" class="muted"></p>
+    <div id="events"></div>
+  </section>
+</main>
+<script src="planner.js"></script>
+</body>
+</html>
