@@ -1,11 +1,21 @@
-/* StudyFlow health diary — local-only; intentionally no network requests */
+/* StudyFlow health diary — authenticated cloud sync */
 (()=>{
 'use strict';
 const KEY='studyflow-health-days-v1';
 const $=id=>document.getElementById(id);
 const valid=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(new Date(s+'T12:00:00').getTime())&&new Date(s+'T12:00:00').toISOString().slice(0,10)===s;
-let selected=new Set();
-try{const value=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(value))selected=new Set(value.filter(valid))}catch{}
+let selected=new Set(),busy=false;
+let localDays=[];
+try{const value=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(value))localDays=value.filter(valid)}catch{}
+const status=text=>{$('healthSyncStatus').textContent=text};
+async function api(path,method='GET',body){
+ const response=await fetch('/api/'+path,{method,credentials:'same-origin',headers:{...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+ const data=await response.json().catch(()=>({error:'Szerverhiba'}));if(!response.ok)throw Object.assign(new Error(data.error||'Szerverhiba'),{status:response.status});return data;
+}
+async function load(){const data=await api('health-days');selected=new Set(data.days.filter(valid));render();showImport();status('☁️ Szinkronizálva')}
+function showImport(){const missing=localDays.filter(d=>!selected.has(d));$('healthImport').hidden=!missing.length;$('healthImportCount').textContent=`${missing.length} korábban mentett nap vár átvitelre.`}
+$('healthImportButton').onclick=async()=>{if(!confirm(`Átvigyünk ${localDays.length} helyben mentett napot a privát felhőnaplódba? A helyi másolat megmarad.`))return;const btn=$('healthImportButton');btn.disabled=true;try{await api('health-days','PUT',{days:localDays});await load();status('🌷 A régi napjaidat is elmentettük!')}catch(err){status(err.message)}finally{btn.disabled=false}};
+
 const now=new Date();
 let year=now.getFullYear(),month=now.getMonth();
 const pad=n=>String(n).padStart(2,'0');
@@ -51,11 +61,12 @@ function render(){
   b.type='button';b.className='health-day'+(checked?' marked':'')+(key===today?' today':'');
   b.textContent=String(day);b.setAttribute('aria-pressed',String(checked));
   b.setAttribute('aria-label',`${key} ${checked?'vérzéses nap, kijelölve':'nincs kijelölve'}`);
-  b.onclick=()=>{
-   if(selected.has(key))selected.delete(key);else selected.add(key);
-   try{localStorage.setItem(KEY,JSON.stringify([...selected].sort()))}
-   catch{alert('A böngésző nem engedte a mentést. Ellenőrizd a tárhelybeállításokat.')}
-   render();
+  b.disabled=busy;
+  b.onclick=async()=>{
+   if(busy)return;busy=true;status('Mentés…');const value=!selected.has(key);
+   try{await api('health-days','POST',{day:key,selected:value});if(value)selected.add(key);else selected.delete(key);status('☁️ Szinkronizálva');render();showImport()}
+   catch(err){status('⚠️ '+err.message);if(err.status===401){location.replace('/belepes.html')}}
+   finally{busy=false;render()}
   };
   frag.append(b);
  }
@@ -63,5 +74,5 @@ function render(){
 }
 $('healthPrev').onclick=()=>{month--;if(month<0){month=11;year--}render()};
 $('healthNext').onclick=()=>{month++;if(month>11){month=0;year++}render()};
-render();
+load().catch(err=>{status(err.message);if(err.status===401)location.replace('/belepes.html')});
 })();

@@ -2,9 +2,10 @@
 <body class="health-page"><main>
 <div class="topline"><a class="back" href="index.html">← Főoldal</a></div>
 <header class="hero"><div class="eyebrow">A LITTLE SELF-CARE 🧸</div><h1>Egészség ♡</h1><p>Egy kis törődés magadnak 🌸</p></header>
-<section class="health-note" aria-label="Kedves üzenet"><div class="health-bear">🧸</div><div><strong>Ma is megérdemled a pihenést ♡</strong><p>Egy meleg tea, egy puha takaró és egy kis énidő. ☕🎀</p></div></section>
+<div id="healthContent"><div class="health-actions"><span id="healthSyncStatus" role="status" aria-live="polite"></span></div><section class="health-note" aria-label="Kedves üzenet"><div class="health-bear">🧸</div><div><strong>Ma is megérdemled a pihenést ♡</strong><p>Egy meleg tea, egy puha takaró és egy kis énidő. ☕🎀</p></div></section>
 <section class="health-stats" aria-label="Menstruációs statisztikák"><div class="health-stat"><span>🌸 Átlagos vérzés</span><strong id="bleedingAvg">–</strong><small>nap</small></div><div class="health-stat"><span>🌙 Átlagos ciklus</span><strong id="cycleAvg">–</strong><small>nap</small></div></section>
 <section class="panel health-calendar"><div class="health-calendar-head"><button id="healthPrev" type="button" aria-label="Előző hónap">‹</button><h2 id="healthMonth"></h2><button id="healthNext" type="button" aria-label="Következő hónap">›</button></div><div class="health-weekdays" aria-hidden="true"><span>H</span><span>K</span><span>Sze</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span></div><div id="healthDays" class="health-days" role="group" aria-label="Vérzéses napok kijelölése"></div><p class="health-legend"><span class="health-swatch"></span> Bejelölt vérzéses nap</p></section>
-<p class="health-privacy">🔒 A napló kizárólag ebben a böngészőben, ezen az eszközön tárolódik. Nem küldjük a StudyFlow közös adatbázisába. Másik eszközön nem jelenik meg, és a böngészőadatok törlésével elveszhet.</p>
+<section class="panel" id="healthImport" hidden><h2>🌷 Korábbi napjaid átköltöztetése</h2><p id="healthImportCount"></p><p>Csak akkor kerülnek a felhőbe, ha jóváhagyod. A régi helyi adataidat nem töröljük.</p><button type="button" id="healthImportButton">Napjaim átvitele ♡</button></section><p class="health-privacy">🔒 A naplód a jelszóval védett, külön egészségügyi adatbázisba szinkronizálódik. A közös StudyFlow-feladatok között nem jelenik meg.</p>
 <p class="health-explain">A ciklushossz két menstruáció első napja között eltelt idő. Az átlagok tájékoztató jellegűek; kevés adat esetén még nem számíthatók.</p>
-</main><script src="health.js"></script></body></html>
+</div></main><script src="health.js"></script><script src="studyflow-session.js"></script>
+</body></html>
