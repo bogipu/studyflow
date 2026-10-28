@@ -11,7 +11,7 @@ export async function onRequest({request,env}){
   const raw=await request.text();if(raw.length>450000)return reply({error:'Túl nagy adatcsomag.'},413);
   let data;try{data=JSON.parse(raw)}catch{return reply({error:'Hibás JSON.'},400)}
   if(!data||!Array.isArray(data.projects)||!Array.isArray(data.sessions)||typeof data.settings!=='object'||data.projects.length>500||data.sessions.length>5000)return reply({error:'Érvénytelen adatok.'},400);
-  if(data.projects.some(p=>typeof p.id!=='string'||typeof p.name!=='string'||p.name.length>100)||data.sessions.some(s=>!['egyetem','bblooms','olvasas','tanulas'].includes(s.category)||!Number.isFinite(s.minutes)||s.minutes<1||s.minutes>180))return reply({error:'Érvénytelen bejegyzés.'},400);
+  if(data.projects.some(p=>typeof p.id!=='string'||typeof p.name!=='string'||p.name.length>100)||data.sessions.some(s=>!['egyetem','bblooms','olvasas','tanulas'].includes(s.category)||!Number.isFinite(s.minutes)||s.minutes<1||s.minutes>180||(s.note!==undefined&&(typeof s.note!=='string'||s.note.length>500))))return reply({error:'Érvénytelen bejegyzés.'},400);
   await env.DB.prepare('INSERT INTO focus_state (id,payload) VALUES (1,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=CURRENT_TIMESTAMP').bind(raw).run();return reply({ok:true});
  }catch(e){console.error('focus api',e);return reply({error:'Adatbázishiba.'},500)}
 }
