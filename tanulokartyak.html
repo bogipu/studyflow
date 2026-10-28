@@ -438,16 +438,48 @@ $('retryMissed').addEventListener('click', async () => {
   catch { restoreProgress(previous); alert('Nem sikerült menteni az ismétlést.'); }
 });
 $('restartAll').addEventListener('click', restartAll);
-// Beépített kártyaadatok: külső Excel-olvasó nélkül is működik.
-// Ha módosítod a studyflow.xlsx fájlt, a beépített adatokat is frissíteni kell.
-const EMBEDDED_WORKBOOK = {"10.26.":[["megvádolva lenni vmivel","to be accused of"],["felület","surface - "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["kell, kellene","ought to - "],["kifutó","enclosure "],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"words":[["spejz","pantry"],["összegyűlik, összeadódik","to pile up"],["vízesés","waterfall"],["bizonyíték","evidence"],["tárgyalás","trial"],["feltételezni","to assume"],["bűnös","guilty"],["meggyőző","convincing"],["védelmi, védő, védelem","defence"],["ijedt, fél","frightened"],["megvádolva lenni vmivel","to be accused of"],["igazság","justice "],["a fiatalok - mindenkire vonatkoztatva, gyűjtőnév","the young"],["többé nem","no longer"],["elhitelteleníteni, lejáratni","to discredit"],["gondolkodni valamin","to think about"],["kitalálni, kigondolni, eszébe jut","to think of"],["kétnyelvű","bilingual "],["simogatni","to pet "],["simogatni ","to caress "],["simogatni","to stroke "],["gyanú","suspicion "],["felnevelés, neveltetés","upbringing "],["tudatosság","awareness "],["tudatában lenni vminek","to be aware of "],["emelkedni, növelni","to increase "],["tégla","brick "],["félrevezetni","to mislead "],["kivágni, eltávolítani","to edit out "],["véghezvinni","to carry out "],["ugyanúgy, mint","as well as "],["venni, vásárolni vmit","to purchase "],["terepgyakorlat","field practice/fieldwork "],["elővigyázatos","cautious "],["felület","surface - "],["csapdába ejteni","to trap - "],["nagyság, hatalmasság","vastness -  "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],[" szükséges, alapvető","essential -"],["gond, probléma","matter - "],["elméleti szinten, elméletileg","theoretically - "],["két hét","fortnight - "],["szánalmas látvány","pathetic sight - "],["szorítani","to clamp - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["hétköznapiság","mundanity - "],["furcsaság, különös szokás","quirk - "],["ellenállni","to resist - "],["kikapcsolni","to switch off - "],["bekapcsolni","to switch on - "],["kell, kellene","ought to - "],["harisnya","tights - "],[" nem gondolni rá, eltávolodni tőle","to take your mind off of (something) -"],["pata","hoof"],["paták","hooves "],[" veszélyforrás, rossz viselkedésű valaki,  veszedelem","menace -"],["kifutó","enclosure "],["most az egyszer","for once "],["",""],["",""],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"zöld fogalmak":[["ZÖLDINFRASTRUKTÚRA","„Zöldinfrastruktúrának nevezzük azokat a természetes és félig természetes területeket, valamint egyéb növényzettel fedett és ökológiai funkciót betöltő területek stratégiailag megtervezett hálózatát, amelyet úgy terveztek és irányítanak, hogy széleskörű ökoszisztéma-szolgáltatások nyújtására legyenek képesek”."]]};
+// A munkalapok mindig a GitHubon közzétett studyflow.xlsx fájlból töltődnek.
+// Az Excel feldolgozásához a SheetJS könyvtár szükséges.
+async function ensureExcelReader() {
+  if (window.XLSX) return;
+  const sources = [
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+  ];
+  for (const src of sources) {
+    try {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      if (window.XLSX) return;
+    } catch (error) { console.warn('Excel-olvasó betöltése sikertelen:', src, error); }
+  }
+  throw new Error('Nem sikerült betölteni az Excel-olvasót. Ellenőrizd az internetkapcsolatot.');
+}
+async function readPublishedWorkbook() {
+  await ensureExcelReader();
+  const url = EXCEL_FILE + '?updated=' + Date.now();
+  const response = await fetch(url, {cache:'no-store'});
+  if (!response.ok) throw new Error('Az Excel nem tölthető le (' + response.status + '). Ellenőrizd, hogy a studyflow.xlsx a főmappában van-e.');
+  const bytes = await response.arrayBuffer();
+  const workbook = XLSX.read(bytes, {type:'array', cellDates:false});
+  return workbook.SheetNames.map(name => ({
+    name,
+    rows: XLSX.utils.sheet_to_json(workbook.Sheets[name], {header:1, defval:'', raw:false, blankrows:false})
+  }));
+}
 async function loadExcel() {
   $('reload').disabled = true;
   $('category').disabled = true;
-  showMessage('Tanulókártyák betöltése…');
+  showMessage('📚 A legfrissebb Excel-adatok betöltése…');
   $('stats').textContent = '';
   try {
-    const parsed = Object.entries(EMBEDDED_WORKBOOK).map(([name, rows]) => {
+    const workbookSheets = await readPublishedWorkbook();
+    const parsed = workbookSheets.map(({name, rows}) => {
       const seen = new Map();
       const cards = [];
       for (const row of rows) {
@@ -473,7 +505,7 @@ async function loadExcel() {
     const selectedIndex = Math.max(0, sheets.findIndex(s => s.name === previousName));
     $('category').value = String(selectedIndex);
     $('category').disabled = false;
-    selectSheet(selectedIndex);
+    await selectSheet(selectedIndex);
   } catch (err) {
     active = null; current = null; $('reset').disabled = true;
     showMessage('Hiba: ' + (err instanceof Error ? err.message : String(err)), true);
