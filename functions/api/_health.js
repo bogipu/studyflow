@@ -3,7 +3,16 @@ const cookieName='__Host-studyflow_session';
 const headers={'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8'};
 export const json=(value,status=200,extra={})=>new Response(JSON.stringify(value),{status,headers:{...headers,...extra}});
 export const validDate=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(Date.parse(s+'T12:00:00'))&&new Date(s+'T12:00:00').toISOString().slice(0,10)===s;
-export const configured=env=>!!(env.DB&&env.STUDYFLOW_PIN&&env.STUDYFLOW_SESSION_SECRET&&/^\d{6}$/.test(env.STUDYFLOW_PIN)&&env.STUDYFLOW_SESSION_SECRET.length>=32);
+export function configProblems(env){
+ const problems=[];
+ if(!env.DB) problems.push('DB adatbázis-kötés hiányzik');
+ if(typeof env.STUDYFLOW_PIN!=='string') problems.push('STUDYFLOW_PIN hiányzik');
+ else if(!/^\d{6}$/.test(env.STUDYFLOW_PIN)) problems.push('STUDYFLOW_PIN nem pontosan 6 számjegy');
+ if(typeof env.STUDYFLOW_SESSION_SECRET!=='string') problems.push('STUDYFLOW_SESSION_SECRET hiányzik');
+ else if(env.STUDYFLOW_SESSION_SECRET.length<32) problems.push('STUDYFLOW_SESSION_SECRET rövidebb 32 karakternél');
+ return problems;
+}
+export const configured=env=>configProblems(env).length===0;
 export function sameOrigin(request){try{return new URL(request.headers.get('Origin')).origin===new URL(request.url).origin}catch{return false}}
 async function mac(secret,value){const k=await crypto.subtle.importKey('raw',enc.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',k,enc.encode(value)))).map(b=>b.toString(16).padStart(2,'0')).join('')}
 function equal(a,b){if(typeof a!=='string'||typeof b!=='string')return false;const x=enc.encode(a),y=enc.encode(b);let diff=x.length^y.length;for(let i=0;i<Math.max(x.length,y.length);i++)diff|=(x[i]||0)^(y[i]||0);return diff===0}

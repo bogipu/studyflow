@@ -1,6 +1,6 @@
-import {json,configured,sameOrigin,checkPassword,signedCookie,ensure,rateKey,blocked,failed,resetAttempts} from './_health.js';
+import {json,configured,configProblems,sameOrigin,checkPassword,signedCookie,ensure,rateKey,blocked,failed,resetAttempts} from './_health.js';
 export async function onRequestPost({request,env}){
- if(!configured(env))return json({error:'A privát napló még nincs beállítva a szerveren.'},503);
+ if(!configured(env))return json({error:'Beállítási hiba: '+configProblems(env).join('; ')},503);
  if(!sameOrigin(request))return json({error:'Érvénytelen kérés.'},403);
  try{await ensure(env.DB);const key=await rateKey(env,request);
  if(await blocked(env.DB,key))return json({error:'Túl sok próbálkozás. Kérlek, próbáld újra 15 perc múlva.'},429);
