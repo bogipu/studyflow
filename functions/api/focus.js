@@ -1,8 +1,9 @@
+import {authenticated,configured} from './_health.js';
 const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const reply=(x,status=200)=>new Response(JSON.stringify(x),{status,headers});
 export async function onRequest({request,env}){
- if(!env.DB||!env.STUDYFLOW_PIN)return reply({error:'Hiányzik a DB vagy STUDYFLOW_PIN beállítás.'},503);
- const supplied=request.headers.get('X-StudyFlow-PIN')||'',expected=String(env.STUDYFLOW_PIN);let mismatch=supplied.length^expected.length;for(let i=0;i<Math.max(supplied.length,expected.length);i++)mismatch|=(supplied.charCodeAt(i)||0)^(expected.charCodeAt(i)||0);if(mismatch)return reply({error:'Hibás PIN.'},401);
+ if(!env.DB||!configured(env))return reply({error:'Hiányzik a DB vagy a StudyFlow belépés beállítása.'},503);
+ if(!await authenticated(request,env))return reply({error:'StudyFlow belépés szükséges.'},401);
  if(!['GET','PUT'].includes(request.method))return reply({error:'Nem támogatott metódus.'},405);
  if(request.method==='PUT'&&request.headers.get('Origin')!==new URL(request.url).origin)return reply({error:'Érvénytelen eredet.'},403);
  try{
