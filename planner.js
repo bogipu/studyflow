@@ -95,13 +95,14 @@ function renderTodayProjects(){
  if(!$('todayTasks'))return;
  const tasks=sorted(entries.filter(e=>!e.isProjectMeta&&e.date===today&&isTodo(e)));
  $('todayTasks').innerHTML=tasks.length?tasks.map(itemHtml).join(''):'<p class="empty">Mára nincs feladatod. ♡</p>';
+ const overdue=sorted(entries.filter(e=>isTodo(e)&&e.date<today&&!e.done&&!e.makeupFor));
+ if($('todayOverdue'))$('todayOverdue').innerHTML=overdue.length?overdue.map(itemHtml).join(''):'<p class="empty">Nincs elmaradásod, ügyes vagy! 🌷</p>';
  if($('todayDateLabel'))$('todayDateLabel').textContent=human(today);
  if($('projectWeekLabel'))$('projectWeekLabel').textContent=`${projectWeek} – ${shift(projectWeek,6)}`;
  const dates=Array.from({length:7},(_,i)=>shift(projectWeek,i));
  $('timelineDays').innerHTML=dates.map(d=>`<div class="timeline-day ${d===today?'is-today':''}"><small>${['V','H','K','Sze','Cs','P','Szo'][new Date(d+'T12:00:00').getDay()]}</small><strong>${Number(d.slice(-2))}.</strong></div>`).join('');
- const projects=projectRecords();
- const singleTasks=sorted(entries.filter(e=>!e.isProjectMeta&&!e.projectId&&isTodo(e)&&e.date>=projectWeek&&e.date<=shift(projectWeek,6)));
- $('projectTimeline').innerHTML=(projects.length?projects.map(p=>{
+ const projects=projectRecords().filter(p=>projectMilestones(p.id).length>0);
+ $('projectTimeline').innerHTML=projects.length?projects.map(p=>{
  const marks=projectMilestones(p.id),start=marks[0]?.date,end=marks.at(-1)?.date;
  const color=/^#[0-9a-f]{6}$/i.test(p.projectColor||'')?p.projectColor:'#d9b8ce';
  let segment='';
@@ -114,7 +115,7 @@ function renderTodayProjects(){
  return `<button class="milestone-dot ${m.done?'complete':''}" data-project-edit-milestone="${esc(m.id)}" style="left:${x}%;--project-color:${color}" title="${esc(m.title)} – ${esc(m.date)}" aria-label="${esc(m.title)} (${esc(m.date)})"></button><span class="milestone-caption" style="left:${x}%">${esc(m.title)}</span>`;
  }).join('');
  return `<div class="project-track"><div class="project-track-head"><strong>${esc(p.title)}</strong><span>${esc(label(p.projectCategory||'task'))} · ${marks.length} állomás</span><button data-project-open="${esc(p.id)}">Szerkesztés</button></div><div class="project-track-bar">${segment}${dots}</div></div>`;
- }).join(''):'')+(singleTasks.length?`<div class="standalone-heading">Önálló feladatok ezen a héten</div>`+singleTasks.map(e=>{const x=(dayDiff(projectWeek,e.date)+.5)/7*100;return `<div class="project-track"><div class="project-track-head"><strong>${esc(e.title)}</strong><span>${esc(label(e.type))}</span></div><div class="project-track-bar"><span class="single-task-dot ${e.done?'complete':''}" style="left:${x}%" title="${esc(e.date)}"></span></div></div>`}).join(''):'')||'<p class="empty">Még nincs projekted vagy heti feladatod. ♡</p>';
+ }).join(''):'<p class="empty">Még nincs mérföldkővel rendelkező projekted. ♡</p>';
 }
 function projectEditor(id){
  const p=projectRecords().find(p=>p.id===id);if(!p)return;
