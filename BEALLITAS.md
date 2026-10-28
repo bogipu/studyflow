@@ -1,10 +1,13 @@
-# StudyFlow – egyetlen 6 számjegyű PIN 🎀
+# StudyFlow – egy PIN az egész oldalhoz
 
-1. Cloudflare Pages projekt: **studyflow-pages** (nem a külön `studyflow` Worker).
-2. Settings → Bindings: a meglévő `DB` kötés mutasson a `studyflow-db` adatbázisra. Nem kell második adatbázis.
-3. Settings → Variables and secrets: `STUDYFLOW_PIN` (Secret, pontosan 6 számjegy) és `STUDYFLOW_SESSION_SECRET` (Secret, legalább 32 véletlen karakter) a **Production** környezetben. PIN-t soha ne tegyél GitHubra.
-4. A ZIP **tartalmát** másold a GitHub repo gyökerébe, a `functions/` mappával együtt. A régi fájlokat frissítsd, de a feladatadatbázist ne töröld. A Cloudflare Pages GitHub-integrációja ezután új buildet indít.
-5. A `studyflow-pages-2tu.pages.dev` címen teszteld: belépés nélkül a kezdőlap és a `/api/planner` sem érhető el; helyes PIN után minden oldal működik; kijelentkezés után ismét PIN kell.
-6. Egészség ♡: a régi böngészőben megnyitva felajánlja a helyi napok importálását. A felhőben a `DB` adatbázis `health_days` táblájába kerülnek, a planner külön `planner_data` táblája megmarad.
+- Cloudflare Pages projekt: `studyflow-pages`.
+- Production D1 binding: `DB` → `studyflow-db`.
+- Production Secret: `STUDYFLOW_PIN` = a saját, pontosan 6 számjegyű PIN.
+- **Nem kell `STUDYFLOW_SESSION_SECRET`.** A munkamenet 256 bites véletlen tokennel működik, amelynek csak SHA-256 lenyomata kerül a meglévő D1-adatbázisba.
+- A teljes ZIP tartalmát a GitHub `studyflow` repo gyökerébe töltsd fel (a `functions/` mappával együtt), a `main` ágra. A GitHub-integráció új Pages telepítést indít.
+- A Cloudflare `studyflow-pages` Production környezetében ellenőrizd, hogy a `STUDYFLOW_PIN` ténylegesen elérhető.
+- Éles ellenőrzés: kijelentkezve `/index.html` a `/belepes.html` oldalra irányítson; `/api/planner` 401-et adjon; helyes PIN után működjön; kijelentkezés után újra kérjen PIN-t.
+- Az `health_days` táblába kerülnek az Egészség napjai; a meglévő planner táblát nem törli és nem módosítja.
+- A korábban létrehozott külön `studyflow-health-private` adatbázist nem használja. Ne töröld, amíg nem ellenőrizted, hogy üres.
 
-**Fontos:** A PIN 1 000 000 lehetséges kombinációja miatt gyengébb egy hosszú jelszónál. Az alkalmazás IP-címenként 5 hibás próbálkozás után 15 percre korlátoz, de egy nagyobb támadás ellen Cloudflare WAF/rate limiting is ajánlott. A szerveroldali middleware és az API-védelem működését éles telepítés után ellenőrizni kell. A PIN csak akkor véd, ha a Pages Functions aktív és a weboldal nem érhető el másik, védetlen domainen vagy deployon. A Cloudflare D1 tárolás nem végponttól végpontig titkosított.
+**Biztonság:** a hatjegyű PIN gyengébb a hosszú jelszónál. A belépés IP-címenként öt hibás próbálkozás után 15 percre korlátoz; emellett globális próbálkozáskorlát is van, ami túlterheléskor téged is kizárhat átmenetileg. Cloudflare WAF rate limit ajánlott. A kód statikus és szintaktikai ellenőrzése nem helyettesíti az éles tesztet. Ha a régi Worker domain (`studyflow.bogi-d7b.workers.dev`) külön nyilvános weboldalt szolgál ki, azt külön ellenőrizni kell, mert ez a Pages-projekt PIN-je nem védi automatikusan.
