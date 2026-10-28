@@ -102,3 +102,31 @@
 .calendar-page #calendarFilters .category-filter.active{background:#f3f0f5;border-color:#c6b8cb;color:#453c4d;font-weight:700}
 .calendar-page #calendarFilters .category-filter:hover{background:#f7f5f8}
 .calendar-page #calendarFilters .category-filter:focus-visible{outline:2px solid #8e789a;outline-offset:2px}
+
+/* Ellie · Mai napom és projektek */
+.timeline-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.timeline-top h2{margin:0}.timeline-nav{display:flex;gap:7px}
+.timeline-nav button,.soft-button{border:1px solid #e7dce5;border-radius:12px;background:#fbf8fb;color:#64596a;padding:7px 12px;cursor:pointer;font:inherit}
+.timeline-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin:14px 0 10px}
+.timeline-day{text-align:center;border-radius:9px;background:#f7f4f8;padding:9px 0;display:grid;gap:3px;font-size:.85rem}
+.timeline-day small{color:#8b8190}.timeline-day.is-today{background:#f0e6f0;outline:1px solid #d8c6d9}
+.project-track{border-bottom:1px solid #f0edf1;padding:12px 0 20px}
+.project-track-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:.86rem}
+.project-track-head span{color:#827885;font-size:.77rem;margin-right:auto}
+.project-track-head button,.milestone-item button{background:#faf7fa;border:1px solid #e9dfe7;border-radius:8px;padding:4px 9px;cursor:pointer;color:#685e6b}
+.project-track-bar{position:relative;height:48px;margin-top:8px;background:repeating-linear-gradient(to right,transparent 0,transparent calc(14.2857% - 1px),#f0edf1 calc(14.2857% - 1px),#f0edf1 14.2857%);border-radius:9px}
+.project-line{position:absolute;top:13px;height:9px;border-radius:20px;opacity:.82}
+.milestone-dot{position:absolute;top:7px;transform:translateX(-50%);width:21px;height:21px;background:var(--project-color);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #d4cbd4;cursor:pointer;z-index:2}
+.milestone-dot.complete{box-shadow:0 0 0 2px #7c9c83}
+.milestone-caption{position:absolute;top:31px;transform:translateX(-50%);font-size:10px;color:#645d66;max-width:14%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.milestone-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #eee8ee}
+.milestone-item label{display:flex;align-items:center;gap:9px;font-size:.88rem}
+.milestone-item>div{display:flex;gap:5px}
+.category-select-wrap{display:flex;align-items:center;gap:12px;margin:12px 0 17px}
+.category-select-wrap select{max-width:250px;background:#faf8fa;border:1px solid #e8dde7;border-radius:10px;padding:9px;font:inherit}
+.today-page .panel{overflow:visible}
+@media(max-width:480px){.milestone-caption{font-size:9px}.project-track-head{font-size:.78rem}}
+
+.standalone-heading{font-size:.85rem;font-weight:700;margin-top:16px;color:#76677a}
+.single-task-dot{position:absolute;top:8px;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;background:#b8b8e4;border:3px solid #fff;box-shadow:0 0 0 1px #bbb0c0}
+.single-task-dot.complete{background:#8db7a2}
