@@ -130,3 +130,26 @@
 .standalone-heading{font-size:.85rem;font-weight:700;margin-top:16px;color:#76677a}
 .single-task-dot{position:absolute;top:8px;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;background:#b8b8e4;border:3px solid #fff;box-shadow:0 0 0 1px #bbb0c0}
 .single-task-dot.complete{background:#8db7a2}
+
+/* Egészség ♡ — nyugodt, kedves, mobilbarát */
+.health-page .hero{margin-bottom:18px}
+.health-note{display:flex;align-items:center;gap:16px;background:#faf0f3;border:1px solid #f1dfe7;border-radius:20px;padding:18px;margin-bottom:17px}
+.health-bear{font-size:42px;line-height:1}
+.health-note strong{color:#6f5361}.health-note p{margin:5px 0 0;color:#8c7884;font-size:.9rem}
+.health-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:17px}
+.health-stat{background:#faf8fa;border:1px solid #efe6ed;border-radius:18px;padding:17px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.health-stat span{width:100%;color:#8b7584;font-size:.83rem}.health-stat strong{font-size:2rem;color:#675262}.health-stat small{color:#8b7584}
+.health-calendar-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.health-calendar-head h2{font-size:1.1rem;margin:0;text-transform:capitalize}
+.health-calendar-head button{border:1px solid #ebdce5;background:#faf5f8;color:#6b5361;border-radius:12px;min-width:40px;height:38px;font-size:1.5rem;cursor:pointer}
+.health-weekdays,.health-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.health-weekdays span{text-align:center;font-size:.75rem;color:#927f8a;padding:4px 0 10px}
+.health-day{height:46px;min-width:0;border:1px solid #f0eaf0;border-radius:12px;background:#faf8fb;color:#665a63;font:inherit;cursor:pointer}
+.health-day.marked{background:#edb8c7;border-color:#d99caf;color:#66394c;font-weight:700}
+.health-day.marked::after{content:' ✓';font-size:.65rem}
+.health-day.today{outline:2px solid #bca5bf;outline-offset:1px}
+.health-day:focus-visible,.health-calendar-head button:focus-visible{outline:3px solid #8f7197;outline-offset:2px}
+.health-legend{display:flex;align-items:center;gap:8px;color:#8b7584;font-size:.8rem;margin-top:17px}
+.health-swatch{display:inline-block;width:15px;height:15px;border-radius:5px;background:#edb8c7}
+.health-privacy,.health-explain{color:#8d7f89;font-size:.78rem;line-height:1.6;margin:14px 3px}
+@media(max-width:420px){.health-day{height:40px;border-radius:9px}.health-stats{gap:8px}.health-stat{padding:12px}.health-note{padding:14px}.health-bear{font-size:35px}}
