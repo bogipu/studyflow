@@ -208,3 +208,12 @@
 }
 
 .health-auth{max-width:440px;margin:20px auto}.health-auth form{display:grid;gap:10px;margin-top:16px}.health-auth input{padding:12px;border:1px solid #e6d5e1;border-radius:12px;width:100%;box-sizing:border-box}.health-auth button,.health-actions button,#healthImportButton{border:1px solid #e5cfdd;border-radius:12px;background:#f4e4ee;color:#664e61;padding:10px 15px;cursor:pointer}.health-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;font-size:.8rem;color:#786779}[hidden]{display:none!important}
+
+/* Egészség: várható ciklus – a korábbi jelölések változatlanok */
+.health-prediction{margin-bottom:17px;background:#fff8fb;border:1px solid #f1dce7;border-radius:18px;padding:18px}
+.health-prediction-label{font-size:.86rem;color:#896c80;margin-bottom:7px}
+.health-prediction strong{display:block;color:#86526f;font-size:1.3rem}
+.health-prediction p{margin:7px 0 0;color:#947e8c;font-size:.82rem}
+.health-day.predicted{background:#fff0f6;border:2px dashed #d9a0bd;color:#9b567d;font-weight:600}
+.health-swatch-predicted{background:#fff0f6;border:2px dashed #d9a0bd;margin-left:12px}
+.health-legend{flex-wrap:wrap}

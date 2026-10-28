@@ -45,8 +45,31 @@ function averages(){
  for(let i=1;i<starts.length;i++){const delta=dayNum(starts[i])-dayNum(starts[i-1]);if(delta>=10&&delta<=90)cycles.push(delta)}
  return {bleeding:avg(lengths),cycle:avg(cycles)};
 }
+function prediction(){
+ const groups=episodes(),starts=groups.map(g=>g[0]);
+ const intervals=[];
+ for(let i=1;i<starts.length;i++){
+  const diff=Math.round(dayNum(starts[i])-dayNum(starts[i-1]));
+  if(diff>=10&&diff<=90)intervals.push(diff);
+ }
+ if(!intervals.length)return null;
+ const cycle=Math.round(intervals.reduce((a,b)=>a+b,0)/intervals.length);
+ const finished=groups.filter(g=>dayNum(dateKey(now.getFullYear(),now.getMonth(),now.getDate()))-dayNum(g.at(-1))>=3);
+ const durations=finished.map(g=>Math.round(dayNum(g.at(-1))-dayNum(g[0])+1));
+ const duration=durations.length?Math.max(1,Math.min(10,Math.round(durations.reduce((a,b)=>a+b,0)/durations.length))):5;
+ let start=starts.at(-1), guard=0;
+ const today=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
+ while(start<today&&guard++<100){
+  const d=new Date(start+'T12:00:00');d.setDate(d.getDate()+cycle);start=dateKey(d.getFullYear(),d.getMonth(),d.getDate());
+ }
+ const predicted=new Set();const d=new Date(start+'T12:00:00');
+ for(let i=0;i<duration;i++){predicted.add(dateKey(d.getFullYear(),d.getMonth(),d.getDate()));d.setDate(d.getDate()+1)}
+ return {start,cycle,duration,predicted,intervals:intervals.length};
+}
 function render(){
- const a=averages();
+ const a=averages(),forecast=prediction();
+ $('healthPredictionDate').textContent=forecast?new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long',day:'numeric'}).format(new Date(forecast.start+'T12:00:00')):'Még nincs elég adat';
+ $('healthPredictionNote').textContent=forecast?`Kb. ${forecast.duration} nap • ${forecast.intervals} korábbi ciklus alapján becsülve`:'Legalább két külön vérzés kezdőnapját jelöld be a becsléshez.';
  $('bleedingAvg').textContent=a.bleeding;
  $('cycleAvg').textContent=a.cycle;
  $('healthMonth').textContent=new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long'}).format(new Date(year,month,1));
@@ -58,9 +81,9 @@ function render(){
  for(let day=1;day<=count;day++){
   const key=dateKey(year,month,day),checked=selected.has(key);
   const b=document.createElement('button');
-  b.type='button';b.className='health-day'+(checked?' marked':'')+(key===today?' today':'');
+  b.type='button';b.className='health-day'+(checked?' marked':'')+(!checked&&forecast?.predicted.has(key)?' predicted':'')+(key===today?' today':'');
   b.textContent=String(day);b.setAttribute('aria-pressed',String(checked));
-  b.setAttribute('aria-label',`${key} ${checked?'vérzéses nap, kijelölve':'nincs kijelölve'}`);
+  b.setAttribute('aria-label',`${key} ${checked?'vérzéses nap, kijelölve':forecast?.predicted.has(key)?'várható vérzés, becslés':'nincs kijelölve'}`);
   b.disabled=busy;
   b.onclick=async()=>{
    if(busy)return;busy=true;status('Mentés…');const value=!selected.has(key);
