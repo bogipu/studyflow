@@ -6,12 +6,10 @@
 <body class="savings-page"><main class="savings-wrap">
 <a class="savings-back" href="index.html">← Vissza a főoldalra</a>
 <header class="savings-hero"><span>🎀 STUDYFLOW ♡</span><h1>🐷 Perselyem ♡</h1><p>Apró lépések, nagy álmok. Itt gyűlhetnek a kis megtakarításaid! 🌷</p></header>
-<section class="savings-panel savings-total" aria-label="Összes megtakarítás"><span class="savings-pig" aria-hidden="true">🐷</span><div><span class="savings-muted">Összesen félretettem</span><div class="savings-number" id="totalSaved">0 Ft</div><span class="savings-muted" id="goalCount">0 megtakarítási cél</span></div></section>
-<section class="savings-panel"><h2>💌 Új álmom</h2><form class="savings-form" id="goalForm"><label class="full">Mire gyűjtesz?<input name="name" maxlength="65" placeholder="Pl. új könyvek 📚" required></label><label>Mennyi a célod? (Ft)<input name="target" type="number" min="1" max="1000000000" step="1" inputmode="numeric" required placeholder="20000"></label><label>Mennyid van már rá? (Ft)<input name="saved" type="number" min="0" max="1000000000" step="1" inputmode="numeric" value="0" required></label><button type="submit">🎀 Cél hozzáadása</button></form><p class="savings-error" id="formError" role="alert"></p></section>
-<section class="savings-panel"><h2>🌸 A kis céljaim</h2><div id="goals" class="savings-grid"></div><p class="savings-notice">♡ A perselyed adatai egyelőre ebben a böngészőben tárolódnak. Másik eszközön nem jelennek meg automatikusan. Nem valódi bankszámla.</p></section>
-<section class="savings-panel" id="financeApp"><h2>🔐 Pénzügyeim ♡</h2><p class="savings-muted">Külön jelszóval védett pénzügyi napló. A perselycéljaid ettől függetlenek.</p>
-<div id="financeLogin"><form id="financeLoginForm" class="savings-form"><label class="full">Pénzügyi jelszó<input type="password" name="password" autocomplete="current-password" required></label><button>🔓 Megnyitás</button></form></div>
-<div id="financeDashboard" hidden>
+<section class="savings-panel" id="perselyGate"><h2>🔐 Perselyem megnyitása</h2><p class="savings-muted">Add meg a külön pénzügyi jelszavadat a Perselyem megtekintéséhez.</p><div id="financeLogin"><form id="financeLoginForm" class="savings-form"><label class="full">Pénzügyi jelszó<input type="password" name="password" autocomplete="current-password" required></label><button type="submit">🔓 Megnyitás</button></form></div><p class="savings-error" id="financeError" role="alert"></p></section>
+<div id="perselyProtected" hidden>
+<section class="savings-panel" id="financeApp"><h2>💗 Pénzügyeim ♡</h2><p class="savings-muted">Számlák, gyors költések és heti-havi összesítők.</p>
+<div id="financeDashboard">
 <div class="savings-grid"><div class="savings-goal"><h3>🌸 Bevételi számla</h3><div id="financeIncomeBalance" class="savings-number">—</div></div><div class="savings-goal"><h3>🛍️ Sima számla</h3><div id="financeSpendingBalance" class="savings-number">—</div></div></div>
 <p class="savings-muted">Az első használatkor add meg a bankodban látható két aktuális egyenleget. Később az eltéréseket korrekcióval rendezheted.</p>
 <form id="financeBalanceForm" class="savings-form"><label>Bevételi számla (Ft)<input name="income" type="number" step="1" required></label><label>Sima számla (Ft)<input name="spending" type="number" step="1" required></label><button>✏️ Egyenlegek beállítása / korrekciója</button></form>
@@ -19,5 +17,9 @@
 <p class="savings-muted">A 25 000 Ft-os heti átvezetést akkor rögzítsd, amikor tényleg megtörtént. A költésekhez nem kell leírás.</p>
 <h3>📅 Heti és havi bontás</h3><form id="financeFilter" class="savings-form"><label>Hónap<input name="month" type="month" required></label><button>Mutasd a hónapot</button></form><div id="financeSummary"></div><div id="financeWeeks"></div>
 <button id="financeLogout" type="button">🔒 Pénzügyeim bezárása</button>
-</div><p class="savings-error" id="financeError" role="alert"></p></section>
+</div></section>
+<section class="savings-panel savings-total" aria-label="Összes megtakarítás"><span class="savings-pig" aria-hidden="true">🐷</span><div><span class="savings-muted">Összesen félretettem</span><div class="savings-number" id="totalSaved">0 Ft</div><span class="savings-muted" id="goalCount">0 megtakarítási cél</span></div></section>
+<section class="savings-panel"><h2>💌 Új álmom</h2><form class="savings-form" id="goalForm"><label class="full">Mire gyűjtesz?<input name="name" maxlength="65" placeholder="Pl. új könyvek 📚" required></label><label>Mennyi a célod? (Ft)<input name="target" type="number" min="1" max="1000000000" step="1" inputmode="numeric" required placeholder="20000"></label><label>Mennyid van már rá? (Ft)<input name="saved" type="number" min="0" max="1000000000" step="1" inputmode="numeric" value="0" required></label><button type="submit">🎀 Cél hozzáadása</button></form><p class="savings-error" id="formError" role="alert"></p></section>
+<section class="savings-panel"><h2>🌸 A kis céljaim</h2><div id="goals" class="savings-grid"></div><p class="savings-notice">♡ A perselyed adatai egyelőre ebben a böngészőben tárolódnak. Másik eszközön nem jelennek meg automatikusan. Nem valódi bankszámla.</p></section>
+</div>
 </main><script src="penzugyek.js" defer></script><script src="persely.js" defer></script><script src="studyflow-session.js" defer></script></body></html>

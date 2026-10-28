@@ -4,7 +4,7 @@ const error=t=>$('financeError').textContent=t||'';
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 $('financeEntryForm').elements.date.value=today();$('financeFilter').elements.month.value=today().slice(0,7);
 async function call(action,body){const res=await fetch(api+'?action='+action,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});const data=await res.json();if(!res.ok)throw Error(data.error||'Hiba');return data}
-function show(open){$('financeLogin').hidden=open;$('financeDashboard').hidden=!open}
+function show(open){$('perselyGate').hidden=open;$('perselyProtected').hidden=!open;$('financeDashboard').hidden=!open}
 async function refresh(){const month=$('financeFilter').elements.month.value;const d=await call('data&month='+encodeURIComponent(month));show(true);$('financeIncomeBalance').textContent=d.balance.initialized?fmt(d.balance.income):'Nincs beállítva';$('financeSpendingBalance').textContent=d.balance.initialized?fmt(d.balance.spending):'Nincs beállítva';
 const entries=d.entries;const sums={income:0,expense:0,transfer:0,saving:0,loan:0,dorm:0};for(const e of entries)sums[e.kind]+=e.amount;
 $('financeSummary').textContent=`Havi bevétel: ${fmt(sums.income)} · Kiadások: ${fmt(sums.expense+sums.saving+sums.loan+sums.dorm)} · Átvezetések: ${fmt(sums.transfer)}`;
