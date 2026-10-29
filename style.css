@@ -102,3 +102,107 @@
 .calendar-page #calendarFilters .category-filter.active{background:#f3f0f5;border-color:#c6b8cb;color:#453c4d;font-weight:700}
 .calendar-page #calendarFilters .category-filter:hover{background:#f7f5f8}
 .calendar-page #calendarFilters .category-filter:focus-visible{outline:2px solid #8e789a;outline-offset:2px}
+
+/* Ellie · Mai napom és projektek */
+.timeline-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.timeline-top h2{margin:0}.timeline-nav{display:flex;gap:7px}
+.timeline-nav button,.soft-button{border:1px solid #e7dce5;border-radius:12px;background:#fbf8fb;color:#64596a;padding:7px 12px;cursor:pointer;font:inherit}
+.timeline-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin:14px 0 10px}
+.timeline-day{text-align:center;border-radius:9px;background:#f7f4f8;padding:9px 0;display:grid;gap:3px;font-size:.85rem}
+.timeline-day small{color:#8b8190}.timeline-day.is-today{background:#f0e6f0;outline:1px solid #d8c6d9}
+.project-track{border-bottom:1px solid #f0edf1;padding:12px 0 20px}
+.project-track-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:.86rem}
+.project-track-head span{color:#827885;font-size:.77rem;margin-right:auto}
+.project-track-head button,.milestone-item button{background:#faf7fa;border:1px solid #e9dfe7;border-radius:8px;padding:4px 9px;cursor:pointer;color:#685e6b}
+.project-track-bar{position:relative;height:48px;margin-top:8px;background:repeating-linear-gradient(to right,transparent 0,transparent calc(14.2857% - 1px),#f0edf1 calc(14.2857% - 1px),#f0edf1 14.2857%);border-radius:9px}
+.project-line{position:absolute;top:13px;height:9px;border-radius:20px;opacity:.82}
+.milestone-dot{position:absolute;top:7px;transform:translateX(-50%);width:21px;height:21px;background:var(--project-color);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #d4cbd4;cursor:pointer;z-index:2}
+.milestone-dot.complete{box-shadow:0 0 0 2px #7c9c83}
+.milestone-caption{position:absolute;top:31px;transform:translateX(-50%);font-size:10px;color:#645d66;max-width:14%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.milestone-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #eee8ee}
+.milestone-item label{display:flex;align-items:center;gap:9px;font-size:.88rem}
+.milestone-item>div{display:flex;gap:5px}
+.category-select-wrap{display:flex;align-items:center;gap:12px;margin:12px 0 17px}
+.category-select-wrap select{max-width:250px;background:#faf8fa;border:1px solid #e8dde7;border-radius:10px;padding:9px;font:inherit}
+.today-page .panel{overflow:visible}
+@media(max-width:480px){.milestone-caption{font-size:9px}.project-track-head{font-size:.78rem}}
+
+.standalone-heading{font-size:.85rem;font-weight:700;margin-top:16px;color:#76677a}
+.single-task-dot{position:absolute;top:8px;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;background:#b8b8e4;border:3px solid #fff;box-shadow:0 0 0 1px #bbb0c0}
+.single-task-dot.complete{background:#8db7a2}
+
+/* Egészség ♡ — nyugodt, kedves, mobilbarát */
+.health-page .hero{margin-bottom:18px}
+.health-note{display:flex;align-items:center;gap:16px;background:#faf0f3;border:1px solid #f1dfe7;border-radius:20px;padding:18px;margin-bottom:17px}
+.health-bear{font-size:42px;line-height:1}
+.health-note strong{color:#6f5361}.health-note p{margin:5px 0 0;color:#8c7884;font-size:.9rem}
+.health-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:17px}
+.health-stat{background:#faf8fa;border:1px solid #efe6ed;border-radius:18px;padding:17px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.health-stat span{width:100%;color:#8b7584;font-size:.83rem}.health-stat strong{font-size:2rem;color:#675262}.health-stat small{color:#8b7584}
+.health-calendar-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.health-calendar-head h2{font-size:1.1rem;margin:0;text-transform:capitalize}
+.health-calendar-head button{border:1px solid #ebdce5;background:#faf5f8;color:#6b5361;border-radius:12px;min-width:40px;height:38px;font-size:1.5rem;cursor:pointer}
+.health-weekdays,.health-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.health-weekdays span{text-align:center;font-size:.75rem;color:#927f8a;padding:4px 0 10px}
+.health-day{height:46px;min-width:0;border:1px solid #f0eaf0;border-radius:12px;background:#faf8fb;color:#665a63;font:inherit;cursor:pointer}
+.health-day.marked{background:#edb8c7;border-color:#d99caf;color:#66394c;font-weight:700}
+.health-day.marked::after{content:' ✓';font-size:.65rem}
+.health-day.today{outline:2px solid #bca5bf;outline-offset:1px}
+.health-day:focus-visible,.health-calendar-head button:focus-visible{outline:3px solid #8f7197;outline-offset:2px}
+.health-legend{display:flex;align-items:center;gap:8px;color:#8b7584;font-size:.8rem;margin-top:17px}
+.health-swatch{display:inline-block;width:15px;height:15px;border-radius:5px;background:#edb8c7}
+.health-privacy,.health-explain{color:#8d7f89;font-size:.78rem;line-height:1.6;margin:14px 3px}
+@media(max-width:420px){.health-day{height:40px;border-radius:9px}.health-stats{gap:8px}.health-stat{padding:12px}.health-note{padding:14px}.health-bear{font-size:35px}}
+
+/* Letisztult StudyFlow főoldal – csak a főoldalra érvényes */
+.home-page{background:#fcfafb}
+.home-layout{max-width:850px;padding-top:38px}
+.home-intro{padding:10px 4px 31px}
+.home-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.home-heading h1{margin:0;color:#7f536b;font-size:clamp(1.85rem,5vw,2.45rem);letter-spacing:-.035em}
+.home-heading>span{font-size:1.75rem}
+.home-intro p{margin:11px 0 0;color:#907a89;line-height:1.65;font-size:.96rem}
+.home-navigation{display:block}
+.home-today{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f9e9f0;border:1px solid #f1dbe6;border-radius:23px;min-height:100px;padding:24px 26px;color:#7e4b68;transition:transform .15s,box-shadow .15s}
+.home-today-label{font-size:clamp(1.2rem,3vw,1.5rem);font-weight:750}
+.home-arrow{font-size:1.5rem;line-height:1;color:#aa7d94}
+.home-section-heading{margin:37px 3px 17px;font-size:1.16rem;color:#80566f}
+.home-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.home-menu-card{min-width:0;min-height:126px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:13px;padding:22px;border-radius:20px;border:1px solid rgba(103,75,94,.06);transition:transform .15s,box-shadow .15s}
+.home-menu-card strong{font-size:1.08rem;line-height:1.3;overflow-wrap:anywhere}
+.home-card-icon{font-size:1.85rem;line-height:1}
+.home-tasks{background:#f0eafb;color:#655b90}
+.home-calendar{background:#eaf0fc;color:#526d9b}
+.home-flashcards{background:#e9f5ed;color:#507d60}
+.home-stats{background:#fff1df;color:#946e4d}
+.home-health{background:#faeaf0;color:#905e77}
+.home-today:hover,.home-menu-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #74526712}
+.home-today:focus-visible,.home-menu-card:focus-visible{outline:3px solid #9a6f96;outline-offset:3px}
+.home-events{margin-top:39px;padding:23px 24px}
+.home-events h2{margin-bottom:10px}
+.home-events #today{margin-top:0}
+@media(max-width:500px){.home-layout{padding-top:25px}.home-intro{padding-bottom:25px}.home-today{min-height:86px;padding:20px}.home-section-heading{margin-top:30px}.home-card-grid{gap:10px}.home-menu-card{min-height:112px;padding:17px;gap:11px}.home-menu-card strong{font-size:.98rem}.home-events{margin-top:30px;padding:18px}}
+@media(prefers-reduced-motion:reduce){.home-today,.home-menu-card{transition:none}}
+
+/* Főoldal finomítás: eredeti kártyás kinézet, csak kisebb méretek */
+.home-layout{max-width:850px}
+.home-intro{padding-bottom:23px}
+.home-events{margin:0 0 23px;padding:20px 23px}
+.home-today{min-height:72px;padding:17px 21px;border-radius:19px}
+.home-today-label{font-size:1.19rem}
+.home-section-heading{margin:25px 3px 14px}
+.home-card-grid{gap:11px}
+.home-menu-card{min-height:91px;padding:15px 18px;gap:8px;border-radius:17px;flex-direction:column;align-items:flex-start;justify-content:center}
+.home-card-icon{font-size:1.5rem}
+.home-menu-card strong{font-size:.97rem}
+@media(max-width:500px){
+.home-intro{padding-bottom:18px}
+.home-events{margin:0 0 17px;padding:16px 18px}
+.home-today{min-height:67px;padding:15px 18px}
+.home-today-label{font-size:1.09rem}
+.home-section-heading{margin:21px 3px 11px}
+.home-card-grid{gap:9px}
+.home-menu-card{min-height:82px;padding:13px 14px;gap:7px}
+.home-card-icon{font-size:1.4rem}
+.home-menu-card strong{font-size:.89rem}
+}
