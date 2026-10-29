@@ -1,9 +1,9 @@
+import {authenticated} from './_health.js';
 const H={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:H});
 export async function onRequest({request,env}){
  if(!env.DB)return reply({error:'Hiányzik a Cloudflare DB adatbázis-kapcsolat.'},503);
- if(!env.STUDYFLOW_PIN)return reply({error:'Hiányzik a STUDYFLOW_PIN Cloudflare titkos változó.'},503);
- const provided=request.headers.get('X-StudyFlow-PIN')||'';const expected=String(env.STUDYFLOW_PIN);let diff=provided.length^expected.length;for(let i=0;i<Math.max(provided.length,expected.length);i++)diff|=(provided.charCodeAt(i)||0)^(expected.charCodeAt(i)||0);if(diff)return reply({error:'Hibás PIN-kód.'},401);
+ if(!(await authenticated(request,env)))return reply({error:'A StudyFlow-belépés szükséges. Jelentkezz be a főoldalon.'},401);
  const method=request.method;
  if(method!=='GET'&&method!=='PUT')return reply({error:'Nem támogatott kérés.'},405);
  if(method==='PUT'&&request.headers.get('Origin')!==new URL(request.url).origin)return reply({error:'Érvénytelen eredet.'},403);
