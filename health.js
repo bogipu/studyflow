@@ -62,8 +62,11 @@ function prediction(){
  while(start<today&&guard++<100){
   const d=new Date(start+'T12:00:00');d.setDate(d.getDate()+cycle);start=dateKey(d.getFullYear(),d.getMonth(),d.getDate());
  }
- const predicted=new Set();const d=new Date(start+'T12:00:00');
- for(let i=0;i<duration;i++){predicted.add(dateKey(d.getFullYear(),d.getMonth(),d.getDate()));d.setDate(d.getDate()+1)}
+ const predicted=new Set();
+ for(let occurrence=0;occurrence<10;occurrence++){
+  const d=new Date(start+'T12:00:00');d.setDate(d.getDate()+occurrence*cycle);
+  for(let i=0;i<duration;i++){predicted.add(dateKey(d.getFullYear(),d.getMonth(),d.getDate()));d.setDate(d.getDate()+1)}
+ }
  return {start,cycle,duration,predicted,intervals:intervals.length};
 }
 function render(){
