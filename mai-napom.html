@@ -1,6 +1,13 @@
-<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#faf7f9"><title>StudyFlow – Mai napom ♡</title><link rel="stylesheet" href="style.css"><link rel="icon" type="image/svg+xml" href="icons/today.svg"></head><body class="today-page"><main>
+<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#faf7f9"><title>StudyFlow – Mai napom ♡</title><link rel="stylesheet" href="style.css"><link rel="icon" type="image/svg+xml" href="icons/today.svg"><style>
+/* Csak a Mai napom fejlécében látható feladat-kördiagram */
+.today-heading-progress{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.today-task-progress{--progress:0%;width:100px;height:100px;flex:0 0 100px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#bd7398 var(--progress),#f0dce7 0);position:relative}
+.today-task-progress::before{content:"";position:absolute;inset:12px;border-radius:50%;background:#faeaf2}
+.today-task-progress span{position:relative;z-index:1;font-size:1.25rem;font-weight:800;color:#864666;font-variant-numeric:tabular-nums}
+@media(max-width:420px){.today-task-progress{width:82px;height:82px;flex-basis:82px}.today-task-progress::before{inset:10px}}
+</style></head><body class="today-page"><main>
 <div class="topline"><a class="back" href="index.html">← Főoldal</a><a class="back" href="feladatok.html">☑️ Feladataim</a><a class="back" href="naptar.html">📅 Naptár</a></div>
-<header class="hero"><div class="eyebrow">YOUR COZY DAY 🌷</div><h1>Mai napom ♡</h1><p id="todayDateLabel"></p></header>
+<header class="hero"><div class="eyebrow">YOUR COZY DAY 🌷</div><div class="today-heading-progress"><div><h1>Mai napom ♡</h1><p id="todayDateLabel"></p></div><div id="todayTaskProgress" class="today-task-progress" role="img" aria-label="Elvégzett feladatok aránya"><span id="todayTaskProgressCount">0/0</span></div></div></header>
 <section class="panel"><h2>Mai feladataim ♡</h2><div id="todayTasks"></div></section>
 <section class="panel"><h2>Elmaradásaim ♡</h2><p class="muted small">A korábbi napokról megmaradt, még nem teljesített feladataid.</p><div id="todayOverdue"></div></section>
 <section class="panel"><div class="timeline-top"><div><h2>Futó projektek ♡</h2><p class="muted small">A színes vonal összeköti a saját mérföldköveidet.</p></div><div class="timeline-nav"><button id="projectPrev" type="button" aria-label="Előző hét">‹</button><button id="projectToday" type="button">Ma</button><button id="projectNext" type="button" aria-label="Következő hét">›</button></div></div><p id="projectWeekLabel" class="muted small"></p><div class="timeline-days" id="timelineDays"></div><div id="projectTimeline"></div></section>

@@ -81,6 +81,19 @@ function renderCalendar(){
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
 }
 
+function renderTodayTaskProgress(){
+ const ring=$('todayTaskProgress'),count=$('todayTaskProgressCount');
+ if(!ring||!count)return;
+ // Mai bejegyzések + korábbról elmaradt teendők és tanulási feladatok.
+ // A ma befejezett korábbi elmaradások is beleszámítanak.
+ const relevant=entries.filter(e=>!e.isProjectMeta&&!e.projectId&&(
+  e.date===today || (isTodo(e)&&e.date<today&&(!e.done||e.completedAt===today)&&!e.makeupFor)
+ ));
+ const done=relevant.filter(e=>e.done).length,total=relevant.length;
+ ring.style.setProperty('--progress',`${total?done/total*100:0}%`);
+ count.textContent=`${done}/${total}`;
+ ring.setAttribute('aria-label',`${total} feladatból ${done} elvégezve`);
+}
 function renderTodayTasks(){
  const current=$('todayTasks'),overdue=$('todayOverdue');
  if(!current&&!overdue)return;
@@ -129,9 +142,9 @@ function renderMilestoneList(id){
 function resetProjectEditor(){
  $('projectForm').reset();$('projectForm').elements.projectId.value='';$('projectFormTitle').textContent='Új projekt ♡';$('projectDelete').hidden=true;$('milestonePanel').hidden=true;
 }
-function render(){renderTodayProjects();if($('todayDate'))$('todayDate').textContent=`Ma: ${new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())}`;renderHome();renderTasks();renderCalendar();renderTodayTasks()}
+function render(){renderTodayProjects();if($('todayDate'))$('todayDate').textContent=`Ma: ${new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date())}`;renderHome();renderTasks();renderCalendar();renderTodayTasks();renderTodayTaskProgress()}
 document.addEventListener('click',async e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.category&&b.closest('#calendarFilters')){calendarCategory=b.dataset.category;renderCalendar()}if(b.dataset.tab){tab=b.dataset.tab;renderTasks()}if(b.dataset.view){view=b.dataset.view;renderCalendar()}if(b.dataset.day){selected=b.dataset.day;renderCalendar()}if(b.dataset.edit){const x=entries.find(x=>x.id===b.dataset.edit);if(x&&$('editForm')){let f=$('editForm');for(let k of ['id','title','date','type','time','minutes','notes'])f.elements[k].value=x[k]??'';$('editPanel').hidden=false;$('editPanel').scrollIntoView({behavior:'smooth',block:'start'})}}if(b.dataset.delete){let x=entries.find(x=>x.id===b.dataset.delete);if(x&&confirm('Biztosan törlöd ezt a bejegyzést?')){entries=entries.filter(y=>y.id!==x.id);await save()}}if(b.dataset.makeup){let x=entries.find(x=>x.id===b.dataset.makeup);if(!x)return;let date=prompt('Melyik dátumra szeretnéd a pótlást? (ÉÉÉÉ-HH-NN)',today);if(!date)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<=x.date){alert('Adj meg az eredeti napnál későbbi, érvényes dátumot.');return}if(entries.some(y=>y.makeupFor===x.id&&!y.done)){alert('Ehhez már van tervezett pótlás.');return}let item={...x,id:uid(),date,done:false,makeupFor:x.id};entries.push(item);await save()}});
-document.addEventListener('change',async e=>{if(e.target.matches('[data-toggle]')){let x=entries.find(x=>x.id===e.target.dataset.toggle);if(x){x.done=e.target.checked;if(x.makeupFor&&x.done){let original=entries.find(y=>y.id===x.makeupFor);if(original)original.done=true}await save();if(x.projectId&&$('milestonePanel')&&!$('milestonePanel').hidden)renderMilestoneList(x.projectId)}}});
+document.addEventListener('change',async e=>{if(e.target.matches('[data-toggle]')){let x=entries.find(x=>x.id===e.target.dataset.toggle);if(x){x.done=e.target.checked;if(isTodo(x)&&x.date<today&&!x.makeupFor){x.completedAt=x.done?today:null}if(x.makeupFor&&x.done){let original=entries.find(y=>y.id===x.makeupFor);if(original)original.done=true}await save();if(x.projectId&&$('milestonePanel')&&!$('milestonePanel').hidden)renderMilestoneList(x.projectId)}}});
 if($('prev')){$('prev').onclick=()=>{if(view==='month')cursor.setMonth(cursor.getMonth()-1,1);else cursor.setDate(cursor.getDate()-(view==='week'?7:1));selected=localDate(cursor);renderCalendar()};$('next').onclick=()=>{if(view==='month')cursor.setMonth(cursor.getMonth()+1,1);else cursor.setDate(cursor.getDate()+(view==='week'?7:1));selected=localDate(cursor);renderCalendar()}}
 if($('taskForm')){$('taskForm').elements.date.value=today;$('taskForm').onsubmit=async e=>{e.preventDefault();let f=e.target;let repeat=f.elements.repeat.value,until=f.elements.repeatUntil.value;
 if(repeat!=='none'&&(!until||until<f.elements.date.value)){alert('Ismétlődésnél adj meg a kezdőnapnál nem korábbi végdátumot.');return}
