@@ -174,6 +174,20 @@ if($('projectDelete'))$('projectDelete').onclick=async()=>{
  if(!id||!confirm('A projekt és minden mérföldköve törlődjön?'))return;
  entries=entries.filter(e=>e.id!==id&&e.projectId!==id);resetProjectEditor();await save();
 };
+// A megadott (2–10) számig létrehozza a hiányzó mérföldköveket.
+if($('milestoneCreateSlots'))$('milestoneCreateSlots').onclick=async()=>{
+ const pid=$('milestoneProjectId')?.value;
+ const project=entries.find(e=>e.id===pid&&e.isProjectMeta);
+ if(!project){alert('Először mentsd el a projektet.');return}
+ const desired=Number($('milestoneDesiredCount')?.value);
+ if(!Number.isInteger(desired)||desired<2||desired>10){alert('2 és 10 közötti számot adj meg.');return}
+ const current=projectMilestones(pid).length;
+ if(current>=desired){alert(`Már ${current} mérföldköved van ebben a projektben.`);return}
+ for(let n=current+1;n<=desired;n++){
+  entries.push({id:uid(),projectId:pid,isTask:true,done:false,title:`${n}.`,date:today,type:project.projectCategory||'task',time:''});
+ }
+ await save();renderMilestoneList(pid);
+};
 if($('milestoneForm'))$('milestoneForm').onsubmit=async ev=>{
  ev.preventDefault();const f=ev.target,id=f.elements.milestoneId.value,pid=f.elements.projectId.value;
  const project=entries.find(e=>e.id===pid&&e.isProjectMeta);if(!project){alert('Először mentsd el a projektet.');return}
