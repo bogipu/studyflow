@@ -9,6 +9,17 @@
 <div class="topline"><a class="back" href="index.html">← Főoldal</a><a class="back" href="feladatok.html">☑️ Feladataim</a><a class="back" href="naptar.html">📅 Naptár</a></div>
 <header class="hero"><div class="eyebrow">YOUR COZY DAY 🌷</div><div class="today-heading-progress"><div><h1>Mai napom ♡</h1><p id="todayDateLabel"></p></div><div id="todayTaskProgress" class="today-task-progress" role="img" aria-label="Elvégzett feladatok aránya"><span id="todayTaskProgressCount">0/0</span></div></div></header>
 <section class="panel"><h2>Mai feladataim ♡</h2><div id="todayTasks"></div></section>
+<section class="panel"><h2>Új feladat hozzáadása ♡</h2>
+<form id="taskForm" class="form">
+<label class="full">Feladat neve<input name="title" maxlength="180" required placeholder="Pl. Biológia ismétlés"></label>
+<label>Dátum<input name="date" type="date" required></label>
+<label>Típus<select name="type"><option value="task">Teendő</option><option value="study">Tanulás</option><option value="event">Program</option><option value="exam">ZH</option><option value="deadline">Határidő</option><option value="bblooms">Bblooms 🌸</option><option value="university">Egyetem 🎓</option></select></label>
+<label>Időpont (nem kötelező)<input name="time" type="time"></label>
+<label>Ismétlődés<select name="repeat"><option value="none">Nem ismétlődik</option><option value="daily">Naponta</option><option value="weekly">Hetente</option><option value="monthly">Havonta</option></select></label>
+<label>Ismétlődés vége<input name="repeatUntil" type="date"></label>
+<label>Tanulás percekben (opcionális)<input name="minutes" type="number" min="1" max="600" placeholder="25"></label>
+<button type="submit">＋ Feladat hozzáadása</button>
+</form></section>
 <section class="panel"><h2>Elmaradásaim ♡</h2><p class="muted small">A korábbi napokról megmaradt, még nem teljesített feladataid.</p><div id="todayOverdue"></div></section>
 <section class="panel"><div class="timeline-top"><div><h2>Futó projektek ♡</h2><p class="muted small">A színes vonal összeköti a saját mérföldköveidet.</p></div><div class="timeline-nav"><button id="projectPrev" type="button" aria-label="Előző hét">‹</button><button id="projectToday" type="button">Ma</button><button id="projectNext" type="button" aria-label="Következő hét">›</button></div></div><p id="projectWeekLabel" class="muted small"></p><div class="timeline-days" id="timelineDays"></div><div id="projectTimeline"></div></section>
 <section class="panel"><div class="timeline-top"><h2 id="projectFormTitle">Új projekt ♡</h2><button id="projectNew" type="button" class="soft-button">＋ Új projekt</button></div><form id="projectForm" class="form"><input type="hidden" name="projectId"><label class="full">Projekt neve<input name="title" maxlength="180" required placeholder="Pl. Ági kertje"></label><label>Kategória<select name="category"><option value="bblooms">Bblooms 🌸</option><option value="university">Egyetem 🎓</option><option value="task">Teendő</option><option value="study">Tanulás</option><option value="event">Program</option><option value="exam">ZH</option><option value="deadline">Határidő</option></select></label><label>Projekt színe<input name="color" type="color" value="#e5b4c9"></label><button type="submit">♡ Projekt mentése</button><button type="button" id="projectDelete" class="danger" hidden>Projekt törlése</button></form></section>
