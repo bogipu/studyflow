@@ -48,8 +48,8 @@
     .round-options button{flex:1;min-width:190px;min-height:54px}
     .round-options .missed{background:#F2E4E7;color:#5D536B}
     .round-options .all{background:#DDEAF1;color:#5D536B}
-    .plant-photo{display:block;max-width:100%;max-height:245px;object-fit:contain;border-radius:16px}
-    .plant-panel{margin-top:24px;padding:20px;border-radius:20px;background:#F4EBF1}
+    .plant-photo{display:block;max-width:100%;max-height:245px;object-fit:contain;border-radius:16px;margin:auto}
+    .plant-switch{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}\n    .plant-switch button{flex:1;min-width:160px}\n    .plant-panel{margin-top:24px;padding:20px;border-radius:20px;background:#F4EBF1}
     .plant-panel h2{margin:0 0 12px;font-size:1.2rem}
     .plant-panel form{display:grid;gap:12px}
     .plant-panel input{width:100%;padding:12px;border:1px solid #D8CEE6;border-radius:12px;font:inherit;background:white}
@@ -72,6 +72,10 @@
     <label class="order-toggle"><input id="order" type="checkbox"> Véletlenszerű sorrend</label>
     <button id="reload" class="secondary" type="button">Frissítés</button>
     <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
+  </div>
+  <div id="plantSwitch" class="plant-switch hidden">
+    <button id="plantStudyTab" type="button">🌿 Növénykártyák tanulása</button>
+    <button id="plantAddTab" type="button" class="secondary">＋ Növénykártyák hozzáadása</button>
   </div>
   <section id="plantPanel" class="plant-panel hidden">
     <h2>🌿 Növényismeret – saját képes kártyák</h2>
@@ -137,6 +141,29 @@ const PLANT_SHEET = 'Növényismeret 🌿';
 let plantCards = [];
 const plantEndpoint = '/api/plant-cards';
 function isPlantSheet() { return active && active.name === PLANT_SHEET; }
+let plantAdding = false;
+function updatePlantView() {
+  const isPlant = !!isPlantSheet();
+  $('plantSwitch').classList.toggle('hidden', !isPlant);
+  $('plantPanel').classList.toggle('hidden', !isPlant || !plantAdding);
+  for (const id of ['study','stats','syncStatus','message','roundSummary']) {
+    if (isPlant && plantAdding) $(id).classList.add('hidden');
+  }
+  if (isPlant && !plantAdding) {
+    $('stats').classList.remove('hidden');
+    $('syncStatus').classList.remove('hidden');
+  }
+  $('plantStudyTab').classList.toggle('secondary', plantAdding);
+  $('plantAddTab').classList.toggle('secondary', !plantAdding);
+}
+$('plantAddTab').addEventListener('click', () => { plantAdding = true; updatePlantView(); });
+$('plantStudyTab').addEventListener('click', () => {
+  plantAdding = false;
+  updatePlantView();
+  if (current) showCard();
+  else if (active) selectSheet(sheets.indexOf(active));
+});
+
 function renderPlantList() {
   const list = $('plantList'); list.replaceChildren();
   for (const card of plantCards) {
@@ -443,8 +470,8 @@ async function selectSheet(index) {
   $('reset').disabled = true;
   $('again').disabled = true; $('learned').disabled = true;
   if (!active) { showMessage('Nem található munkalap.', true); return; }
-  $('plantPanel').classList.toggle('hidden', !isPlantSheet());
-  if (!active.cards.length) { $('syncStatus').textContent = ''; showMessage('Ez a kategória még üres. Tölts fel egy növényfotót és add meg a latin nevét.'); return; }
+  updatePlantView();
+  if (!active.cards.length) { $('syncStatus').textContent = ''; showMessage('Ez a kategória még üres. A „Növénykártyák hozzáadása” gombbal tölthetsz fel képet.'); updatePlantView(); return; }
   showMessage('☁️ Tanulási haladás betöltése…');
   $('syncStatus').textContent = '☁️ Online haladás lekérése…';
   try {
@@ -569,7 +596,7 @@ async function loadExcel() {
     $('category').disabled = false;
     selectSheet(selectedIndex);
   } catch (err) {
-    active = null; current = null; $('reset').disabled = true; $('plantPanel').classList.add('hidden');
+    active = null; current = null; $('reset').disabled = true; $('plantPanel').classList.add('hidden'); $('plantSwitch').classList.add('hidden');
     showMessage('Hiba: ' + (err instanceof Error ? err.message : String(err)), true);
   } finally { $('reload').disabled = false; }
 }
