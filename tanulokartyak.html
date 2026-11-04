@@ -48,6 +48,16 @@
     .round-options button{flex:1;min-width:190px;min-height:54px}
     .round-options .missed{background:#F2E4E7;color:#5D536B}
     .round-options .all{background:#DDEAF1;color:#5D536B}
+    .plant-photo{display:block;max-width:100%;max-height:245px;object-fit:contain;border-radius:16px}
+    .plant-panel{margin-top:24px;padding:20px;border-radius:20px;background:#F4EBF1}
+    .plant-panel h2{margin:0 0 12px;font-size:1.2rem}
+    .plant-panel form{display:grid;gap:12px}
+    .plant-panel input{width:100%;padding:12px;border:1px solid #D8CEE6;border-radius:12px;font:inherit;background:white}
+    .plant-panel label{display:grid;gap:5px}
+    .plant-list{display:grid;gap:8px;margin-top:15px}
+    .plant-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px;background:white;border-radius:12px}
+    .plant-row img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+    .plant-row button{padding:8px 12px}
     .hidden{display:none!important}
     @media(max-width:460px){main{padding:20px 14px}.card-scene{height:270px}.actions{gap:8px}.actions button{padding:12px 8px;font-size:.92rem}}
     @media(prefers-reduced-motion:reduce){.card-inner{transition:none}}
@@ -63,6 +73,16 @@
     <button id="reload" class="secondary" type="button">Frissítés</button>
     <button id="reset" class="secondary" type="button" disabled>Újrakezdés</button>
   </div>
+  <section id="plantPanel" class="plant-panel hidden">
+    <h2>🌿 Növényismeret – saját képes kártyák</h2>
+    <form id="plantForm">
+      <label>Növény fényképe<input id="plantFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" required></label>
+      <label>Latin név (hátoldal)<input id="plantLatin" type="text" maxlength="180" required placeholder="Pl. Lavandula angustifolia"></label>
+      <button id="plantSave" type="submit">＋ Képes kártya mentése online</button>
+    </form>
+    <p id="plantStatus" class="stats" role="status"></p>
+    <div id="plantList" class="plant-list"></div>
+  </section>
   <div id="stats" class="stats" aria-live="polite"></div>
   <div id="syncStatus" class="stats" aria-live="polite" style="font-size:.86rem;margin-top:-10px">☁️ Haladás betöltése…</div>
   <div id="message" class="message">Excel-adatok betöltése…</div>
@@ -113,6 +133,68 @@ let roundMissed = new Set();
 let learnedOnline = new Set();
 let progressBusy = false;
 let sheetRequest = 0;
+const PLANT_SHEET = 'Növényismeret 🌿';
+let plantCards = [];
+const plantEndpoint = '/api/plant-cards';
+function isPlantSheet() { return active && active.name === PLANT_SHEET; }
+function renderPlantList() {
+  const list = $('plantList'); list.replaceChildren();
+  for (const card of plantCards) {
+    const row = document.createElement('div'); row.className = 'plant-row';
+    const photo = document.createElement('img'); photo.src = card.image; photo.alt = 'Növényfotó';
+    const name = document.createElement('span'); name.textContent = card.answer;
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'secondary'; remove.textContent = 'Törlés';
+    remove.addEventListener('click', async () => {
+      if (!confirm('Törlöd ezt a növénykártyát minden eszközről?')) return;
+      remove.disabled = true;
+      try {
+        const res = await fetch(plantEndpoint + '?id=' + encodeURIComponent(card.serverId), {method:'DELETE'});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        await loadExcel();
+      } catch (e) { $('plantStatus').textContent = 'Törlés sikertelen: ' + e.message; remove.disabled = false; }
+    });
+    row.append(photo,name,remove); list.appendChild(row);
+  }
+}
+async function readPlantCards() {
+  const res = await fetch(plantEndpoint, {cache:'no-store'});
+  if (!res.ok) throw new Error('A növénykártyák nem tölthetők be (HTTP ' + res.status + ')');
+  const data = await res.json();
+  if (!Array.isArray(data.cards)) throw new Error('Hibás növénykártya-adatok');
+  plantCards = data.cards.map(c => ({id:'plant:'+c.id, serverId:c.id, question:'', answer:c.latin, image:c.image}));
+  return plantCards;
+}
+async function compressPlantImage(file) {
+  if (!file || !file.type.startsWith('image/')) throw new Error('Válassz egy képfájlt.');
+  if (file.size > 15 * 1024 * 1024) throw new Error('Legfeljebb 15 MB-os képet válassz.');
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 800 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const image = canvas.toDataURL('image/jpeg',0.75);
+    if (image.length > 380000) throw new Error('A kép túl nagy a tömörítés után is.');
+    return image;
+  } finally { bitmap.close(); }
+}
+$('plantForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const button = $('plantSave'); button.disabled = true;
+  $('plantStatus').textContent = '☁️ Kép feltöltése…';
+  try {
+    const image = await compressPlantImage($('plantFile').files[0]);
+    const latin = $('plantLatin').value.trim();
+    if (!latin) throw new Error('Add meg a latin nevet.');
+    const res = await fetch(plantEndpoint, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image,latin})});
+    if (!res.ok) { const err = await res.json().catch(()=>({})); throw new Error(err.error || 'HTTP '+res.status); }
+    $('plantForm').reset();
+    await loadExcel();
+    $('plantStatus').textContent = '☁️ A növénykártya online mentve.';
+  } catch (err) { $('plantStatus').textContent = '⚠️ ' + err.message; }
+  finally { button.disabled = false; }
+});
 // Minden Excel-munkalap saját, harmonikus pasztell kártyaszíneket kap.
 // A két szín egy munkalapon belül a kártya elejéhez és hátuljához tartozik.
 const SHEET_COLORS = [
@@ -218,7 +300,12 @@ function showCard() {
 }
 function renderCard() {
   if (!current) return;
-  $('frontWord').textContent = current.question; // Mindig az Excel A (első) oszlopa
+  $('frontWord').replaceChildren();
+  if (current.image) {
+    const img = document.createElement('img'); img.className = 'plant-photo';
+    img.src = current.image; img.alt = 'Melyik növény látható a képen?';
+    $('frontWord').appendChild(img);
+  } else $('frontWord').textContent = current.question; // Excel A oszlopa
   $('backWord').textContent = current.answer;
   $('card').classList.toggle('is-flipped', flipped);
   $('card').setAttribute('aria-pressed', String(flipped));
@@ -233,6 +320,7 @@ function fitCardWords() {
   const baseHeight = mobile ? 270 : 310;
   const maxHeight = 580;
   scene.style.height = baseHeight + 'px';
+  if (current.image) { $('frontWord').style.fontSize = '20px'; $('backWord').style.fontSize = '36px'; return; }
   const words = [$('frontWord'), $('backWord')];
   for (const word of words) word.style.fontSize = '44px';
   // Először növeljük a kártyát, majd szükség esetén csökkentjük a betűt.
@@ -355,7 +443,8 @@ async function selectSheet(index) {
   $('reset').disabled = true;
   $('again').disabled = true; $('learned').disabled = true;
   if (!active) { showMessage('Nem található munkalap.', true); return; }
-  if (!active.cards.length) { showMessage('Ez a kategória még üres.'); return; }
+  $('plantPanel').classList.toggle('hidden', !isPlantSheet());
+  if (!active.cards.length) { $('syncStatus').textContent = ''; showMessage('Ez a kategória még üres. Tölts fel egy növényfotót és add meg a latin nevét.'); return; }
   showMessage('☁️ Tanulási haladás betöltése…');
   $('syncStatus').textContent = '☁️ Online haladás lekérése…';
   try {
@@ -438,48 +527,16 @@ $('retryMissed').addEventListener('click', async () => {
   catch { restoreProgress(previous); alert('Nem sikerült menteni az ismétlést.'); }
 });
 $('restartAll').addEventListener('click', restartAll);
-// A munkalapok mindig a GitHubon közzétett studyflow.xlsx fájlból töltődnek.
-// Az Excel feldolgozásához a SheetJS könyvtár szükséges.
-async function ensureExcelReader() {
-  if (window.XLSX) return;
-  const sources = [
-    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
-  ];
-  for (const src of sources) {
-    try {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-      if (window.XLSX) return;
-    } catch (error) { console.warn('Excel-olvasó betöltése sikertelen:', src, error); }
-  }
-  throw new Error('Nem sikerült betölteni az Excel-olvasót. Ellenőrizd az internetkapcsolatot.');
-}
-async function readPublishedWorkbook() {
-  await ensureExcelReader();
-  const url = EXCEL_FILE + '?updated=' + Date.now();
-  const response = await fetch(url, {cache:'no-store'});
-  if (!response.ok) throw new Error('Az Excel nem tölthető le (' + response.status + '). Ellenőrizd, hogy a studyflow.xlsx a főmappában van-e.');
-  const bytes = await response.arrayBuffer();
-  const workbook = XLSX.read(bytes, {type:'array', cellDates:false});
-  return workbook.SheetNames.map(name => ({
-    name,
-    rows: XLSX.utils.sheet_to_json(workbook.Sheets[name], {header:1, defval:'', raw:false, blankrows:false})
-  }));
-}
+// Beépített kártyaadatok: külső Excel-olvasó nélkül is működik.
+// Ha módosítod a studyflow.xlsx fájlt, a beépített adatokat is frissíteni kell.
+const EMBEDDED_WORKBOOK = {"10.26.":[["megvádolva lenni vmivel","to be accused of"],["felület","surface - "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["kell, kellene","ought to - "],["kifutó","enclosure "],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"words":[["spejz","pantry"],["összegyűlik, összeadódik","to pile up"],["vízesés","waterfall"],["bizonyíték","evidence"],["tárgyalás","trial"],["feltételezni","to assume"],["bűnös","guilty"],["meggyőző","convincing"],["védelmi, védő, védelem","defence"],["ijedt, fél","frightened"],["megvádolva lenni vmivel","to be accused of"],["igazság","justice "],["a fiatalok - mindenkire vonatkoztatva, gyűjtőnév","the young"],["többé nem","no longer"],["elhitelteleníteni, lejáratni","to discredit"],["gondolkodni valamin","to think about"],["kitalálni, kigondolni, eszébe jut","to think of"],["kétnyelvű","bilingual "],["simogatni","to pet "],["simogatni ","to caress "],["simogatni","to stroke "],["gyanú","suspicion "],["felnevelés, neveltetés","upbringing "],["tudatosság","awareness "],["tudatában lenni vminek","to be aware of "],["emelkedni, növelni","to increase "],["tégla","brick "],["félrevezetni","to mislead "],["kivágni, eltávolítani","to edit out "],["véghezvinni","to carry out "],["ugyanúgy, mint","as well as "],["venni, vásárolni vmit","to purchase "],["terepgyakorlat","field practice/fieldwork "],["elővigyázatos","cautious "],["felület","surface - "],["csapdába ejteni","to trap - "],["nagyság, hatalmasság","vastness -  "],["hiány","absence - "],["elhagyatottság, magány","desolation - "],[" szükséges, alapvető","essential -"],["gond, probléma","matter - "],["elméleti szinten, elméletileg","theoretically - "],["két hét","fortnight - "],["szánalmas látvány","pathetic sight - "],["szorítani","to clamp - "],["megfigyelő","observer - "],["egymás mellé helyezés","juxtaposition - "],["hétköznapiság","mundanity - "],["furcsaság, különös szokás","quirk - "],["ellenállni","to resist - "],["kikapcsolni","to switch off - "],["bekapcsolni","to switch on - "],["kell, kellene","ought to - "],["harisnya","tights - "],[" nem gondolni rá, eltávolodni tőle","to take your mind off of (something) -"],["pata","hoof"],["paták","hooves "],[" veszélyforrás, rossz viselkedésű valaki,  veszedelem","menace -"],["kifutó","enclosure "],["most az egyszer","for once "],["",""],["",""],["hogy még tovább rontsunk a helyzeten","to make matters worse "],["az a vége hogy ő csinálja meg","to end up doing stg "],["vívás","fencing - "],["követelni, igényelni","to demand "],["követelés, igény","demand "],["párbaj","duel - "],["megfelelés, azzal egyenértékű ","equivalence - "],["megfelelő(je)","equivalent - "],[" kard","sword -"],["tőr","foil "],["törzs","trunk "],["végtagok","limbs "],["merevebb, keményebb","stiffer "],["engedély","permit "],["engedélyezett","permissible "],["engedni","to permit "],["lovasság","cavalry - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["ijesztő, félelmet keltő","intimidating - "],["előfordulni","to occur - "],["hatékonyság","effectiveness - "],["alkalmazkodni, beállítani, megigazítani","adjust - "],["megsérül, sérülést okoz","to injure – "],["stabil, biztos","steady - "],["gumiabroncs","tyre - "],["elkerülhető","avoidable - "],["elkerülő (ember)","avoidant - "],["sérülések","injuries - "],["laza, bő","loose - "],["lazítani","to loosen - "],["torlódás, dugulás, zsúfoltság","congestion - "],["szükségesség","necessity - "],["óraátállítás","the clock change - "],["beadandó, nagyobb házi","assignment - "],["kikapcsolni, nem gondolni rá","to take your mind off of things - "],["kikapcsolni","to wind down - "],["időpazarló","time-consuming - "],["megajánlott jegy","offered grade - "],["megterhelő","demanding - "],["bizonyíték","proof - "],["megnyer, elnyer, gyarapodik, szerez","gain - "],["megdöbbenés, csodálkozás","amazement - "],["megélni vmiből, keresni pénzt","to make/earn a living - "],["bizonyítani","to prove - "],["ismételten, újra meg újra","repeatedly - "]],"zöld fogalmak":[["ZÖLDINFRASTRUKTÚRA","„Zöldinfrastruktúrának nevezzük azokat a természetes és félig természetes területeket, valamint egyéb növényzettel fedett és ökológiai funkciót betöltő területek stratégiailag megtervezett hálózatát, amelyet úgy terveztek és irányítanak, hogy széleskörű ökoszisztéma-szolgáltatások nyújtására legyenek képesek”."]]};
 async function loadExcel() {
   $('reload').disabled = true;
   $('category').disabled = true;
-  showMessage('📚 A legfrissebb Excel-adatok betöltése…');
+  showMessage('Tanulókártyák betöltése…');
   $('stats').textContent = '';
   try {
-    const workbookSheets = await readPublishedWorkbook();
-    const parsed = workbookSheets.map(({name, rows}) => {
+    const parsed = Object.entries(EMBEDDED_WORKBOOK).map(([name, rows]) => {
       const seen = new Map();
       const cards = [];
       for (const row of rows) {
@@ -494,6 +551,11 @@ async function loadExcel() {
       return {name, cards};
     });
     if (!parsed.length) throw new Error('Nincsenek munkalapok.');
+    let plants = [];
+    try { plants = await readPlantCards(); }
+    catch (error) { console.warn("Növénykártyák nem elérhetők:", error); $("plantStatus").textContent = "⚠️ A növénykártyák online tárhelye nem érhető el."; }
+    parsed.push({name:PLANT_SHEET,cards:plants});
+    renderPlantList();
     const previousName = active?.name;
     sheets = parsed;
     $('category').replaceChildren();
@@ -505,9 +567,9 @@ async function loadExcel() {
     const selectedIndex = Math.max(0, sheets.findIndex(s => s.name === previousName));
     $('category').value = String(selectedIndex);
     $('category').disabled = false;
-    await selectSheet(selectedIndex);
+    selectSheet(selectedIndex);
   } catch (err) {
-    active = null; current = null; $('reset').disabled = true;
+    active = null; current = null; $('reset').disabled = true; $('plantPanel').classList.add('hidden');
     showMessage('Hiba: ' + (err instanceof Error ? err.message : String(err)), true);
   } finally { $('reload').disabled = false; }
 }
