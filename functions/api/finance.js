@@ -72,14 +72,28 @@ export async function onRequest({request,env}){
  if(action==='entry'){
  const {kind,amount,day}=body;
  if(!['expense','income','transfer','saving','loan','dorm'].includes(kind)||!money(amount)||amount===0||!validDay(day))return reply({error:'Érvénytelen tétel.'},400);
+ // A korábbi napra rögzített tételek történeti naplóbejegyzések:
+ // nem módosítják újra a jelenlegi, banki egyenleg alapján beállított összegeket.
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Budapest',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+ const part=k=>parts.find(x=>x.type===k).value;
+ const today=`${part('year')}-${part('month')}-${part('day')}`;
+ if(day<today){
+  const balance=await env.DB.prepare('SELECT initialized FROM finance_balances WHERE id=1').first();
+  if(!balance?.initialized)return reply({error:'Először állítsd be az egyenlegeket.'},400);
+  await env.DB.prepare('INSERT INTO finance_entries(id,day,kind,amount) VALUES (?,?,?,?)').bind(crypto.randomUUID(),day,kind,amount).run();
+  return reply({ok:true,historical:true});
+ }
  const deltaIncome=kind==='income'?amount:kind==='transfer'?-amount:0;
  const deltaSpending=kind==='transfer'?amount:kind==='income'?0:-amount;
  const id=crypto.randomUUID();
+ // Egy tranzakcióban frissítjük az egyenleget és rögzítjük a tételt.
  const batch=await env.DB.batch([
- env.DB.prepare('UPDATE finance_balances SET income=income+?,spending=spending+? WHERE id=1 AND initialized=1 AND income+?>=0 AND spending+?>=0').bind(deltaIncome,deltaSpending,deltaIncome,deltaSpending),
+  env.DB.prepare('UPDATE finance_balances SET income=income+?,spending=spending+? WHERE id=1 AND initialized=1 AND income+?>=0 AND spending+?>=0').bind(deltaIncome,deltaSpending,deltaIncome,deltaSpending),
+  env.DB.prepare('INSERT INTO finance_entries(id,day,kind,amount) SELECT ?,?,?,? WHERE changes()>0').bind(id,day,kind,amount)
  ]);
  if(!batch[0]?.meta?.changes)return reply({error:'Először állítsd be az egyenlegeket, vagy nincs elég fedezet.'},400);
- await env.DB.prepare('INSERT INTO finance_entries(id,day,kind,amount) VALUES (?,?,?,?)').bind(id,day,kind,amount).run();return reply({ok:true});
+ if(!batch[1]?.meta?.changes)return reply({error:'Nem sikerült a tétel rögzítése.'},500);
+ return reply({ok:true});
  }
  return reply({error:'Ismeretlen művelet.'},404);
  }catch(e){return reply({error:'Nem sikerült a művelet. Ellenőrizd a dátumot és próbáld újra.'},500)}
