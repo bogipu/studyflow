@@ -63,12 +63,30 @@ export async function onRequest({request,env}){
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return reply({error:'Érvénytelen hónap.'},400);
  const balance=await env.DB.prepare('SELECT income,spending,savings,initialized FROM finance_balances WHERE id=1').first();
  const rows=await env.DB.prepare('SELECT id,day,kind,amount,balance_applied FROM finance_entries WHERE day>=? AND day<? ORDER BY day DESC,created_at DESC').bind(month+'-01',month+'-32').all();
- return reply({balance,entries:rows.results||[],auto});
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Budapest',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=k=>parts.find(x=>x.type===k).value;const today=`${part('year')}-${part('month')}-${part('day')}`;
+ const start='2026-10-01';const sums=await env.DB.prepare("SELECT kind,COALESCE(SUM(amount),0) AS total FROM finance_entries WHERE day>=? AND day<=? AND kind IN ('income','expense','saving','loan','dorm') GROUP BY kind").bind(start,today).all();const totals=Object.fromEntries((sums.results||[]).map(r=>[r.kind,Number(r.total)]));
+ const first=new Date(start+'T12:00:00Z'),last=new Date(today+'T12:00:00Z');const weeks=new Set(),months=new Set();for(let d=new Date(first);d<=last;d.setUTCDate(d.getUTCDate()+1)){const mon=d.toISOString().slice(0,7);months.add(mon);const monday=new Date(d);monday.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);weeks.add(monday.toISOString().slice(0,10))}
+ const inc=totals.income||0,exp=(totals.expense||0)+(totals.saving||0)+(totals.loan||0)+(totals.dorm||0);const round=n=>Math.round(n);const averages={weeklyExpense:round(exp/weeks.size),monthlyExpense:round(exp/months.size),weeklyIncome:round(inc/weeks.size),monthlyIncome:round(inc/months.size)};
+ return reply({balance,entries:rows.results||[],auto,averages});
  }
  const body=await request.json();
  if(action==='balances'){
  if(!money(body.income)||!money(body.spending)||!money(body.savings))return reply({error:'Érvénytelen egyenleg.'},400);
  await env.DB.prepare("UPDATE finance_balances SET income=?,spending=?,savings=?,initialized=1,auto_start=COALESCE(auto_start, date('now')) WHERE id=1").bind(body.income,body.spending,body.savings).run();return reply({ok:true});
+ }
+ if(action==='delete'){
+ const id=body?.id;
+ if(typeof id!=='string'||id.length>100||!id||id.startsWith('weekly-transfer-')||id.startsWith('monthly-savings-'))return reply({error:'Ez a tétel nem törölhető.'},400);
+ const old=await env.DB.prepare('SELECT id,kind,amount,day,balance_applied FROM finance_entries WHERE id=?').bind(id).first();
+ if(!old)return reply({error:'A tétel már nem található. Frissítsd az oldalt.'},404);
+ const amount=Number(old.amount);let di=0,ds=0,dv=0;
+ if(old.balance_applied){if(old.kind==='income')di=-amount;else if(old.kind==='transfer'){di=amount;ds=-amount}else if(old.kind==='savings_transfer'){di=amount;dv=-amount}else ds=amount}
+ const result=await env.DB.batch([
+ env.DB.prepare('UPDATE finance_balances SET income=income+?,spending=spending+?,savings=savings+? WHERE id=1 AND initialized=1 AND income+?>=0 AND spending+?>=0 AND savings+?>=0 AND EXISTS(SELECT 1 FROM finance_entries WHERE id=? AND kind=? AND amount=? AND day=?)').bind(di,ds,dv,di,ds,dv,id,old.kind,amount,old.day),
+ env.DB.prepare('DELETE FROM finance_entries WHERE id=? AND kind=? AND amount=? AND day=? AND changes()>0').bind(id,old.kind,amount,old.day)
+ ]);
+ if(!result[1]?.meta?.changes)return reply({error:'Nem törölhető: időközben megváltozott a tétel, vagy az egyenleg negatívvá válna. Frissítsd az oldalt.'},409);
+ return reply({ok:true});
  }
  if(action==='edit'){
  const {id,kind,amount,day}=body;
